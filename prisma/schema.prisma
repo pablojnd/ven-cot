@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CATALOG TABLES
+// ============================================
+
+model ProductLine {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  pricePerM2  Float
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  productLineColors     ProductLineColor[]
+  productLineAccessories ProductLineAccessory[]
+  productTypeLines      ProductTypeLine[]
+  pricingRules          PricingRule[]
+  quoteItems            QuoteItem[]
+}
+
+model ProductType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  productTypeLines ProductTypeLine[]
+  quoteItems       QuoteItem[]
+}
+
+model ProductTypeLine {
+  id            String   @id @default(cuid())
+  productTypeId String
+  productLineId String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Cascade)
+
+  @@unique([productTypeId, productLineId])
+}
+
+model Color {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  code         String  @unique
+  hexValue     String?
+  surchargePct Float   @default(0)
+  isRAL        Boolean @default(false)
+  isActive     Boolean @default(true)
+  sortOrder    Int     @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  productLineColors ProductLineColor[]
+  quoteItems        QuoteItem[]
+}
+
+model ProductLineColor {
+  id            String   @id @default(cuid())
+  productLineId String
+  colorId       String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Cascade)
+  color       Color       @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  @@unique([productLineId, colorId])
+}
+
+model GlassOption {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  code         String   @unique
+  description  String?
+  surchargePct Float    @default(0)
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  quoteItems QuoteItem[]
+}
+
+model Accessory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  price       Float
+  unit        String   @default("unidad")
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  productLineAccessories ProductLineAccessory[]
+  quoteItemAccessories   QuoteItemAccessory[]
+}
+
+model ProductLineAccessory {
+  id            String   @id @default(cuid())
+  productLineId String
+  accessoryId   String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Cascade)
+  accessory   Accessory   @relation(fields: [accessoryId], references: [id], onDelete: Cascade)
+
+  @@unique([productLineId, accessoryId])
+}
+
+model Material {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HardwareItem {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  price       Float
+  unit        String   @default("unidad")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PricingRule {
+  id            String   @id @default(cuid())
+  productLineId String
+  name          String
+  ruleType      String
+  value         Float
+  unit          String?
+  minPanels     Int?
+  maxPanels     Int?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// QUOTE TABLES
+// ============================================
+
+model Quote {
+  id            String   @id @default(cuid())
+  quoteNumber   String   @unique
+  status        String   @default("draft")
+  clientName    String?
+  clientEmail   String?
+  clientPhone   String?
+  notes         String?
+  totalSubtotal Float    @default(0)
+  totalTax      Float    @default(0)
+  totalAmount   Float    @default(0)
+  currency      String   @default("CLP")
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items QuoteItem[]
+}
+
+model QuoteItem {
+  id               String   @id @default(cuid())
+  quoteId          String
+  productTypeId    String
+  productLineId    String
+  glassOptionId    String
+  colorId          String?
+  widthMm          Int
+  heightMm         Int
+  panelCount       Int      @default(1)
+  quantity         Int      @default(1)
+  observations     String?
+  basePrice        Float    @default(0)
+  colorSurcharge   Float    @default(0)
+  glassSurcharge   Float    @default(0)
+  panelSurcharge   Float    @default(0)
+  accessoriesTotal Float    @default(0)
+  subtotal         Float    @default(0)
+  tax              Float    @default(0)
+  total            Float    @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  quote        Quote              @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productType  ProductType        @relation(fields: [productTypeId], references: [id])
+  productLine  ProductLine        @relation(fields: [productLineId], references: [id])
+  glassOption  GlassOption        @relation(fields: [glassOptionId], references: [id])
+  color        Color?             @relation(fields: [colorId], references: [id])
+
+  accessories     QuoteItemAccessory[]
+  priceBreakdowns QuoteItemPriceBreakdown[]
+}
+
+model QuoteItemAccessory {
+  id          String @id @default(cuid())
+  quoteItemId String
+  accessoryId String
+  quantity    Int    @default(1)
+  unitPrice   Float
+  totalPrice  Float
+
+  quoteItem QuoteItem @relation(fields: [quoteItemId], references: [id], onDelete: Cascade)
+  accessory Accessory @relation(fields: [accessoryId], references: [id])
+
+  @@unique([quoteItemId, accessoryId])
+}
+
+model QuoteItemPriceBreakdown {
+  id          String @id @default(cuid())
+  quoteItemId String
+  concept     String
+  label       String
+  amount      Float
+  percentage  Float?
+  sortOrder   Int    @default(0)
+
+  quoteItem QuoteItem @relation(fields: [quoteItemId], references: [id], onDelete: Cascade)
+}
