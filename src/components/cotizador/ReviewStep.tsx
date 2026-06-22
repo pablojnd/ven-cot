@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuoteStore, getCurrentProductType, getCurrentProductLine, getCurrentColor, getCurrentGlassOption, getAvailableAccessories, getCompletedSteps } from '@/stores/quoteStore';
+import { useQuoteStore, getCurrentProductType, getCurrentProductLine, getCurrentColor, getCurrentGlassOption, getAvailableAccessoriesForState, getCompletedSteps } from '@/stores/quoteStore';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ReviewStep() {
@@ -9,7 +9,7 @@ export default function ReviewStep() {
   const productLine = getCurrentProductLine(store);
   const color = getCurrentColor(store);
   const glass = getCurrentGlassOption(store);
-  const availableAccessories = getAvailableAccessories(store);
+  const availableAccessories = getAvailableAccessoriesForState(store);
   const selectedAccessoryIds = store.selectedAccessories.map((a) => a.accessoryId);
   const selectedAccessoryNames = availableAccessories
     .filter((a) => selectedAccessoryIds.includes(a.id))
@@ -78,11 +78,11 @@ export default function ReviewStep() {
         {estimate && allComplete && (
           <div className="mt-4 pt-3 border-t border-emerald-200">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700">Total estimado</span>
-              <span className="text-lg font-bold text-emerald-600">{fmt(estimate.total)}</span>
+              <span className="text-sm font-semibold text-gray-700">Total estimado (con IVA)</span>
+              <span className="text-lg font-bold text-emerald-600">{fmt(estimate.total + estimate.tax)}</span>
             </div>
             {store.quantity > 1 && (
-              <div className="text-xs text-gray-400 text-right">{fmt(estimate.unitTotal)} c/u</div>
+              <div className="text-xs text-gray-400 text-right">{fmt(estimate.unitTotal + Math.round(estimate.unitTotal * 0.19))} c/u</div>
             )}
           </div>
         )}

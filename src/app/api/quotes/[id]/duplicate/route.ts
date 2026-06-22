@@ -74,12 +74,13 @@ export async function POST(
             panelCount: item.panelCount,
             quantity: item.quantity,
             observations: item.observations,
-            basePrice: item.basePrice,
-            colorSurcharge: item.colorSurcharge,
-            glassSurcharge: item.glassSurcharge,
-            panelSurcharge: item.panelSurcharge,
+            profilesTotal: item.profilesTotal,
+            glassTotal: item.glassTotal,
             accessoriesTotal: item.accessoriesTotal,
+            laborTotal: item.laborTotal,
             subtotal: item.subtotal,
+            marginAmount: item.marginAmount,
+            preTotal: item.preTotal,
             tax: item.tax,
             total: item.total,
           },
@@ -123,10 +124,10 @@ export async function POST(
                 select: { id: true, name: true, code: true, icon: true },
               },
               productLine: {
-                select: { id: true, name: true, code: true, pricePerM2: true },
+                select: { id: true, name: true, code: true, marginPct: true, marginPctCafe: true },
               },
               glassOption: {
-                select: { id: true, name: true, code: true, surchargePct: true },
+                select: { id: true, name: true, code: true, description: true },
               },
               color: {
                 select: { id: true, name: true, code: true, hexValue: true, surchargePct: true, isRAL: true },
@@ -134,7 +135,7 @@ export async function POST(
               accessories: {
                 include: {
                   accessory: {
-                    select: { id: true, name: true, code: true, price: true, unit: true },
+                    select: { id: true, name: true, code: true, price: true, priceCafe: true, unit: true },
                   },
                 },
               },

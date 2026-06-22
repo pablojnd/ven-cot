@@ -5,6 +5,11 @@ import {
   fetchCatalog,
   estimatePrice,
   createQuote,
+  getAvailableGlassOptions,
+  getGlassPrice,
+  getRoundingMultiple,
+  getLaborCost,
+  getProfilePrices,
   type CatalogData,
   type ProductType,
   type ProductLine,
@@ -93,23 +98,39 @@ export function getAvailableLines(state: QuoteConfigState): ProductLine[] {
 
 export function getAvailableColors(state: QuoteConfigState): Color[] {
   if (!state.catalog || !state.productLineId) return [];
-  const colorIds = state.catalog.productLineColors
-    .filter((plc) => plc.productLineId === state.productLineId)
+  return getAvailableColorsForLine(state.catalog, state.productLineId);
+}
+
+function getAvailableColorsForLine(catalog: CatalogData, lineId: string): Color[] {
+  const colorIds = catalog.productLineColors
+    .filter((plc) => plc.productLineId === lineId)
     .map((plc) => plc.colorId);
-  return state.catalog.colors
+  return catalog.colors
     .filter((c) => colorIds.includes(c.id))
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-export function getAvailableAccessories(state: QuoteConfigState): Accessory[] {
+export function getAvailableAccessoriesForState(state: QuoteConfigState): Accessory[] {
   if (!state.catalog || !state.productLineId) return [];
-  const accIds = state.catalog.productLineAccessories
-    .filter((pla) => pla.productLineId === state.productLineId)
+  return getAvailableAccessoriesForLine(state.catalog, state.productLineId);
+}
+
+function getAvailableAccessoriesForLine(catalog: CatalogData, lineId: string): Accessory[] {
+  const accIds = catalog.productLineAccessories
+    .filter((pla) => pla.productLineId === lineId)
     .map((pla) => pla.accessoryId);
-  return state.catalog.accessories
+  return catalog.accessories
     .filter((a) => accIds.includes(a.id))
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
+
+export function getAvailableGlassForState(state: QuoteConfigState): GlassOption[] {
+  if (!state.catalog || !state.productLineId) return [];
+  return getAvailableGlassOptions(state.catalog, state.productLineId);
+}
+
+// Keep backward compat aliases
+export { getAvailableAccessoriesForState as getAvailableAccessories };
 
 export function getPanelSurchargeRule(state: QuoteConfigState): PricingRule | null {
   if (!state.catalog || !state.productLineId) return null;
@@ -208,13 +229,21 @@ export const useQuoteStore = create<QuoteStore>((set, get) => ({
   setProductLine: (id: string) => {
     set({ productLineId: id, colorId: null, glassOptionId: null, selectedAccessories: [] });
     const state = get();
-    const colors = getAvailableColors({ ...state, productLineId: id });
+    const catalog = state.catalog;
+    if (!catalog) return;
+
+    // Auto-select first available color
+    const colors = getAvailableColorsForLine(catalog, id);
     if (colors.length > 0) {
       set({ colorId: colors[0].id });
     }
-    if (state.catalog && state.catalog.glassOptions.length > 0) {
-      set({ glassOptionId: state.catalog.glassOptions.sort((a, b) => a.sortOrder - b.sortOrder)[0].id });
+
+    // Auto-select first available glass for this line (from productLineGlass)
+    const availableGlass = getAvailableGlassOptions(catalog, id);
+    if (availableGlass.length > 0) {
+      set({ glassOptionId: availableGlass[0].id });
     }
+
     setTimeout(() => get().recalculatePrice(), 0);
   },
 
@@ -277,21 +306,36 @@ export const useQuoteStore = create<QuoteStore>((set, get) => ({
     const state = get();
     const line = getCurrentProductLine(state);
     const color = getCurrentColor(state);
-    const glass = getCurrentGlassOption(state);
-    const panelRule = getPanelSurchargeRule(state);
+    const catalog = state.catalog;
 
-    if (!line || !color || !glass) {
+    if (!line || !color || !catalog || !state.glassOptionId) {
       set({ priceEstimate: null });
       return;
     }
 
+    // Get glass price for this line and glass option
+    const glassPricePerM2 = getGlassPrice(catalog, line.id, state.glassOptionId);
+    if (glassPricePerM2 === 0) {
+      set({ priceEstimate: null });
+      return;
+    }
+
+    const productType = getCurrentProductType(state);
+
+    // Get accessory prices with both natural and cafe prices
     const accessoryPrices = state.selectedAccessories.map((sa) => {
-      const acc = state.catalog?.accessories.find((a) => a.id === sa.accessoryId);
-      return { price: acc?.price || 0, quantity: sa.quantity };
+      const acc = catalog.accessories.find((a) => a.id === sa.accessoryId);
+      return {
+        price: acc?.price || 0,
+        priceCafe: acc?.priceCafe || 0,
+        code: acc?.code || '',
+        quantity: sa.quantity,
+      };
     });
 
-    const minimumAreaRule = state.catalog?.pricingRules.find(
-      (r) => r.productLineId === state.productLineId && r.ruleType === 'minimum_area'
+    // Get profile prices for this line
+    const lineProfilePrices = catalog.profilePrices.filter(
+      (pp) => pp.productLineId === line.id
     );
 
     const estimate = estimatePrice({
@@ -299,12 +343,16 @@ export const useQuoteStore = create<QuoteStore>((set, get) => ({
       heightMm: state.heightMm,
       panelCount: state.panelCount,
       quantity: state.quantity,
-      pricePerM2: line.pricePerM2,
-      colorSurchargePct: color.surchargePct,
-      glassSurchargePct: glass.surchargePct,
+      productLineCode: line.code,
+      productTypeCode: productType?.code || 'corredera',
+      marginPct: line.marginPct,
+      marginPctCafe: line.marginPctCafe,
+      colorCode: color.code,
+      glassPricePerM2,
       accessoryPrices,
-      panelSurchargePct: panelRule?.value,
-      minimumArea: minimumAreaRule?.value,
+      profilePrices: lineProfilePrices,
+      laborCost: getLaborCost(catalog, line.id),
+      roundingMultiple: getRoundingMultiple(catalog, line.id),
     });
 
     set({ priceEstimate: estimate });

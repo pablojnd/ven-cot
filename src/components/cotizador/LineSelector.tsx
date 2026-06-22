@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuoteStore, getAvailableLines } from '@/stores/quoteStore';
-import { ChevronDown } from 'lucide-react';
 
 export default function LineSelector() {
   const store = useQuoteStore();
@@ -22,7 +21,7 @@ export default function LineSelector() {
       {lines.length === 0 ? (
         <p className="text-sm text-gray-400">Seleccione un tipo de producto primero</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {lines.map((line) => {
             const isSelected = line.id === selectedId;
             return (
@@ -46,8 +45,15 @@ export default function LineSelector() {
                 {line.description && (
                   <div className="text-xs text-gray-400 mt-1">{line.description}</div>
                 )}
-                <div className="text-sm font-semibold text-[#0D5C63] mt-2">
-                  ${Math.round(line.pricePerM2).toLocaleString('es-CL')} / m²
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-xs font-medium text-[#0D5C63]">
+                    Margen: {line.marginPct}%
+                  </span>
+                  {line.marginPctCafe !== line.marginPct && (
+                    <span className="text-xs text-amber-600">
+                      Café: {line.marginPctCafe}%
+                    </span>
+                  )}
                 </div>
               </button>
             );

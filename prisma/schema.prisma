@@ -8,7 +8,7 @@ datasource db {
 }
 
 // ============================================
-// CATALOG TABLES
+// CATALOG TABLES — Real Crispieri Data
 // ============================================
 
 model ProductLine {
@@ -16,7 +16,8 @@ model ProductLine {
   name        String   @unique
   code        String   @unique
   description String?
-  pricePerM2  Float
+  marginPct   Float    @default(0)   // Main margin % for this line (e.g. 10, 15, 30)
+  marginPctCafe Float  @default(0)   // Margin % when color is Café (if different)
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
@@ -24,7 +25,9 @@ model ProductLine {
 
   productLineColors     ProductLineColor[]
   productLineAccessories ProductLineAccessory[]
+  productLineGlass      ProductLineGlass[]
   productTypeLines      ProductTypeLine[]
+  profilePrices         ProfilePrice[]
   pricingRules          PricingRule[]
   quoteItems            QuoteItem[]
 }
@@ -62,7 +65,7 @@ model Color {
   name         String  @unique
   code         String  @unique
   hexValue     String?
-  surchargePct Float   @default(0)
+  surchargePct Float   @default(0) // Surcharge % over base price
   isRAL        Boolean @default(false)
   isActive     Boolean @default(true)
   sortOrder    Int     @default(0)
@@ -87,17 +90,32 @@ model ProductLineColor {
 }
 
 model GlassOption {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  code         String   @unique
-  description  String?
-  surchargePct Float    @default(0)
-  isActive     Boolean  @default(true)
-  sortOrder    Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  quoteItems QuoteItem[]
+  productLineGlass ProductLineGlass[]
+  quoteItems       QuoteItem[]
+}
+
+// Glass pricing per product line (each line has different m² prices)
+model ProductLineGlass {
+  id            String   @id @default(cuid())
+  productLineId String
+  glassOptionId String
+  pricePerM2    Float    // Price per m² for this glass in this line
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Cascade)
+  glassOption GlassOption @relation(fields: [glassOptionId], references: [id], onDelete: Cascade)
+
+  @@unique([productLineId, glassOptionId])
 }
 
 model Accessory {
@@ -105,7 +123,8 @@ model Accessory {
   name        String   @unique
   code        String   @unique
   description String?
-  price       Float
+  price       Float    // Fixed price per unit (natural color)
+  priceCafe   Float    @default(0) // Price in café color
   unit        String   @default("unidad")
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
@@ -129,26 +148,21 @@ model ProductLineAccessory {
   @@unique([productLineId, accessoryId])
 }
 
-model Material {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  code        String   @unique
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+// Aluminum profile prices per line and color
+model ProfilePrice {
+  id             String   @id @default(cuid())
+  productLineId  String
+  profileName    String   // e.g. "Riel Inf.", "Jamba", "Pierna"
+  profileCode    String   // e.g. "5001", "8001", "7095"
+  priceNatural   Float    // Price per 6m strip (natural)
+  priceCafe      Float    // Price per 6m strip (café)
+  stripLengthM   Float    @default(6) // Strip length in meters (normally 6)
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-model HardwareItem {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  code        String   @unique
-  description String?
-  price       Float
-  unit        String   @default("unidad")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Cascade)
 }
 
 model PricingRule {
@@ -202,12 +216,13 @@ model QuoteItem {
   panelCount       Int      @default(1)
   quantity         Int      @default(1)
   observations     String?
-  basePrice        Float    @default(0)
-  colorSurcharge   Float    @default(0)
-  glassSurcharge   Float    @default(0)
-  panelSurcharge   Float    @default(0)
+  profilesTotal    Float    @default(0)
+  glassTotal       Float    @default(0)
   accessoriesTotal Float    @default(0)
+  laborTotal       Float    @default(0)
   subtotal         Float    @default(0)
+  marginAmount     Float    @default(0)
+  preTotal         Float    @default(0) // After margin, before rounding
   tax              Float    @default(0)
   total            Float    @default(0)
   createdAt        DateTime @default(now())

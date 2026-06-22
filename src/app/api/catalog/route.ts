@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 /**
  * GET /api/catalog
  * Returns all catalog data needed for the configurator.
+ * Now includes productLineGlass, profilePrices for real Crispieri pricing.
  */
 export async function GET() {
   try {
@@ -14,8 +15,10 @@ export async function GET() {
       colors,
       productLineColors,
       glassOptions,
+      productLineGlass,
       accessories,
       productLineAccessories,
+      profilePrices,
       pricingRules,
     ] = await Promise.all([
       db.productType.findMany({
@@ -48,6 +51,13 @@ export async function GET() {
         where: { isActive: true },
         orderBy: { sortOrder: 'asc' },
       }),
+      db.productLineGlass.findMany({
+        where: { isActive: true },
+        include: {
+          productLine: { select: { id: true, name: true, code: true } },
+          glassOption: { select: { id: true, name: true, code: true, description: true } },
+        },
+      }),
       db.accessory.findMany({
         where: { isActive: true },
         orderBy: { sortOrder: 'asc' },
@@ -56,7 +66,14 @@ export async function GET() {
         where: { isActive: true },
         include: {
           productLine: { select: { id: true, name: true, code: true } },
-          accessory: { select: { id: true, name: true, code: true, price: true, unit: true } },
+          accessory: { select: { id: true, name: true, code: true, price: true, priceCafe: true, unit: true } },
+        },
+      }),
+      db.profilePrice.findMany({
+        where: { isActive: true },
+        orderBy: [{ productLineId: 'asc' }, { sortOrder: 'asc' }],
+        include: {
+          productLine: { select: { id: true, name: true, code: true } },
         },
       }),
       db.pricingRule.findMany({
@@ -74,8 +91,10 @@ export async function GET() {
       colors,
       productLineColors,
       glassOptions,
+      productLineGlass,
       accessories,
       productLineAccessories,
+      profilePrices,
       pricingRules,
     });
   } catch (error) {

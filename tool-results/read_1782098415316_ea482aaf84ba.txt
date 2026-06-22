@@ -1,0 +1,496 @@
+     1→import { db } from '../src/lib/db';
+     2→
+     3→async function main() {
+     4→  console.log('🌱 Seeding real Crispieri data...');
+     5→
+     6→  // ═══════════════════════════════════════════
+     7→  // PRODUCT TYPES (categories of products)
+     8→  // ═══════════════════════════════════════════
+     9→  const corredera = await db.productType.create({ data: { name: 'Ventana Corredera', code: 'corredera', description: 'Ventana corredera de aluminio', icon: 'sliding', sortOrder: 1 } });
+    10→  const abatible = await db.productType.create({ data: { name: 'Ventana Abatible', code: 'abatible', description: 'Ventana abatible / proyectante', icon: 'hinged', sortOrder: 2 } });
+    11→  const puerta = await db.productType.create({ data: { name: 'Puerta', code: 'puerta', description: 'Puerta de aluminio', icon: 'door', sortOrder: 3 } });
+    12→  const fijo = await db.productType.create({ data: { name: 'Fijo', code: 'fijo', description: 'Panel fijo de aluminio', icon: 'fixed', sortOrder: 4 } });
+    13→  const celosia = await db.productType.create({ data: { name: 'Celosía', code: 'celosia', description: 'Celosía de aluminio', icon: 'louvers', sortOrder: 5 } });
+    14→  const shower = await db.productType.create({ data: { name: 'Shower Door', code: 'shower-door', description: 'Puerta de ducha', icon: 'shower', sortOrder: 6 } });
+    15→
+    16→  // ═══════════════════════════════════════════
+    17→  // PRODUCT LINES (real Crispieri lines)
+    18→  // ═══════════════════════════════════════════
+    19→  const l5000 = await db.productLine.create({ data: { name: 'Línea 5000', code: 'linea-5000', description: 'Línea 5000 corredera estándar', marginPct: 15, marginPctCafe: 25, sortOrder: 1 } });
+    20→  const l7000 = await db.productLine.create({ data: { name: 'Línea 7000', code: 'linea-7000', description: 'Línea 7000 corredera premium', marginPct: 80, marginPctCafe: 80, sortOrder: 2 } });
+    21→  const l8000 = await db.productLine.create({ data: { name: 'Línea 8000', code: 'linea-8000', description: 'Línea 8000 con termopanel', marginPct: 10, marginPctCafe: 10, sortOrder: 3 } });
+    22→  const brazoExt = await db.productLine.create({ data: { name: 'Ventana Brazo Ext.', code: 'brazo-ext', description: 'Ventana con brazo exterior', marginPct: 15, marginPctCafe: 15, sortOrder: 4 } });
+    23→  const ventAbatir = await db.productLine.create({ data: { name: 'Ventana de Abatir', code: 'vent-abatir', description: 'Ventana de abatir', marginPct: 40, marginPctCafe: 80, sortOrder: 5 } });
+    24→  const cp7095 = await db.productLine.create({ data: { name: 'Centro Puerta 7095/5034', code: 'cp-7095', description: 'Fijo con centro de puerta 7095/5034', marginPct: 30, marginPctCafe: 30, sortOrder: 6 } });
+    25→  const cp3060 = await db.productLine.create({ data: { name: 'Centro Puerta 30x60/40x80', code: 'cp-3060', description: 'Centro puerta tubular 30x60 o 40x80', marginPct: 20, marginPctCafe: 30, sortOrder: 7 } });
+    26→  const puertaTubo = await db.productLine.create({ data: { name: 'Puerta Tubo 40x40/40x100', code: 'puerta-tubo', description: 'Puerta tubo 40x40 o 40x100', marginPct: 20, marginPctCafe: 20, sortOrder: 8 } });
+    27→  const fijoTub = await db.productLine.create({ data: { name: 'Fijo Tubular Rectangular', code: 'fijo-tubular', description: 'Fijo con tubular rectangular', marginPct: 40, marginPctCafe: 40, sortOrder: 9 } });
+    28→  const fijoCP = await db.productLine.create({ data: { name: 'Fijo con Centro de Puerta', code: 'fijo-cp', description: 'Fijo con centro de puerta', marginPct: 40, marginPctCafe: 80, sortOrder: 10 } });
+    29→  const celosias = await db.productLine.create({ data: { name: 'Celosías', code: 'celosias', description: 'Celosías de aluminio', marginPct: 50, marginPctCafe: 50, sortOrder: 11 } });
+    30→  const showerDoor = await db.productLine.create({ data: { name: 'Shower Door AM-12', code: 'shower-am12', description: 'Shower Door línea AM-12 ALUMCO', marginPct: 10, marginPctCafe: 10, sortOrder: 12 } });
+    31→
+    32→  const allLines = [l5000, l7000, l8000, brazoExt, ventAbatir, cp7095, cp3060, puertaTubo, fijoTub, fijoCP, celosias, showerDoor];
+    33→
+    34→  // ═══════════════════════════════════════════
+    35→  // PRODUCT TYPE ↔ LINE associations
+    36→  // ═══════════════════════════════════════════
+    37→  // Correderas: Línea 5000, 7000, 8000
+    38→  for (const l of [l5000, l7000, l8000]) {
+    39→    await db.productTypeLine.create({ data: { productTypeId: corredera.id, productLineId: l.id } });
+    40→  }
+    41→  // Abatibles: Brazo Ext, Ventana Abatir
+    42→  for (const l of [brazoExt, ventAbatir]) {
+    43→    await db.productTypeLine.create({ data: { productTypeId: abatible.id, productLineId: l.id } });
+    44→  }
+    45→  // Puertas: Centro Puerta 7095, 30x60, Puerta Tubo
+    46→  for (const l of [cp7095, cp3060, puertaTubo]) {
+    47→    await db.productTypeLine.create({ data: { productTypeId: puerta.id, productLineId: l.id } });
+    48→  }
+    49→  // Fijos: Fijo Tubular, Fijo CP
+    50→  for (const l of [fijoTub, fijoCP]) {
+    51→    await db.productTypeLine.create({ data: { productTypeId: fijo.id, productLineId: l.id } });
+    52→  }
+    53→  // Celosías
+    54→  await db.productTypeLine.create({ data: { productTypeId: celosia.id, productLineId: celosias.id } });
+    55→  // Shower Door
+    56→  await db.productTypeLine.create({ data: { productTypeId: shower.id, productLineId: showerDoor.id } });
+    57→
+    58→  // ═══════════════════════════════════════════
+    59→  // COLORS (real Crispieri colors with surcharges)
+    60→  // ═══════════════════════════════════════════
+    61→  const natural = await db.color.create({ data: { name: 'Natural', code: 'natural', hexValue: '#C0C0C0', surchargePct: 0, sortOrder: 1 } });
+    62→  const cafe = await db.color.create({ data: { name: 'Café', code: 'cafe', hexValue: '#5C3317', surchargePct: 0, sortOrder: 2 } }); // Base price column D
+    63→  const titanio = await db.color.create({ data: { name: 'Titanio', code: 'titanio', hexValue: '#4A4A4A', surchargePct: 10, sortOrder: 3 } });
+    64→  const blanco = await db.color.create({ data: { name: 'Blanco', code: 'blanco', hexValue: '#FFFFFF', surchargePct: 10, sortOrder: 4 } });
+    65→  const madera = await db.color.create({ data: { name: 'Madera', code: 'madera', hexValue: '#8B6914', surchargePct: 15, sortOrder: 5 } });
+    66→  const personalizado = await db.color.create({ data: { name: 'Personalizado RAL', code: 'ral', hexValue: '#888888', surchargePct: 20, isRAL: true, sortOrder: 6 } });
+    67→
+    68→  const allColors = [natural, cafe, titanio, blanco, madera, personalizado];
+    69→
+    70→  // Associate colors with lines (varies by line)
+    71→  // Most lines have: natural, café, titanio, blanco
+    72→  // Some also have: madera
+    73→  // Línea 7000 and Celosías: only natural, café, titanio
+    74→  for (const l of allLines) {
+    75→    // All lines have natural and café
+    76→    await db.productLineColor.create({ data: { productLineId: l.id, colorId: natural.id } });
+    77→    await db.productLineColor.create({ data: { productLineId: l.id, colorId: cafe.id } });
+    78→    
+    79→    // Most lines have titanio (not Línea 7000 and Celosías in some cases, but we include for simplicity)
+    80→    await db.productLineColor.create({ data: { productLineId: l.id, colorId: titanio.id } });
+    81→
+    82→    // Most lines have blanco (not Línea 7000, Celosías)
+    83→    if (![l7000.id, celosias.id].includes(l.id)) {
+    84→      await db.productLineColor.create({ data: { productLineId: l.id, colorId: blanco.id } });
+    85→    }
+    86→
+    87→    // Some lines have madera
+    88→    if ([l5000.id, l8000.id, cp7095.id, puertaTubo.id, fijoTub.id, fijoCP.id].includes(l.id)) {
+    89→      await db.productLineColor.create({ data: { productLineId: l.id, colorId: madera.id } });
+    90→    }
+    91→
+    92→    // All lines can have personalizado
+    93→    await db.productLineColor.create({ data: { productLineId: l.id, colorId: personalizado.id } });
+    94→  }
+    95→
+    96→  // ═══════════════════════════════════════════
+    97→  // GLASS OPTIONS (real Crispieri glass types)
+    98→  // ═══════════════════════════════════════════
+    99→  const gDoble = await db.glassOption.create({ data: { name: 'Doble Incoloro', code: 'doble-inc', description: 'Doble vidrio incoloro', sortOrder: 1 } });
+   100→  const gTriple = await db.glassOption.create({ data: { name: 'Triple Incoloro', code: 'triple-inc', description: 'Triple vidrio incoloro', sortOrder: 2 } });
+   101→  const gVitrea = await db.glassOption.create({ data: { name: 'Vitrea Incolora', code: 'vitrea-inc', description: 'Vitrea incolora', sortOrder: 3 } });
+   102→  const gBronc4 = await db.glassOption.create({ data: { name: 'Bronce 4mm', code: 'bronc-4mm', description: 'Vidrio bronce 4mm', sortOrder: 4 } });
+   103→  const gBronc5 = await db.glassOption.create({ data: { name: 'Bronce 5mm', code: 'bronc-5mm', description: 'Vidrio bronce 5mm', sortOrder: 5 } });
+   104→  const gBronc6 = await db.glassOption.create({ data: { name: 'Bronce 6mm', code: 'bronc-6mm', description: 'Vidrio bronce 6mm', sortOrder: 6 } });
+   105→  const gCatedral = await db.glassOption.create({ data: { name: 'Catedral', code: 'catedral', description: 'Vidrio catedral', sortOrder: 7 } });
+   106→  const gCatColor = await db.glassOption.create({ data: { name: 'Catedral Color', code: 'cat-color', description: 'Vidrio catedral color', sortOrder: 8 } });
+   107→  const gStopSol = await db.glassOption.create({ data: { name: 'Stop Sol 4mm', code: 'stop-sol', description: 'Vidrio reflectivo Stop Sol', sortOrder: 9 } });
+   108→  const gSolarCool = await db.glassOption.create({ data: { name: 'Solar Cool 5mm', code: 'solar-cool', description: 'Vidrio Solar Cool', sortOrder: 10 } });
+   109→  const gInast6 = await db.glassOption.create({ data: { name: 'Inastillable 6.4mm', code: 'inast-6mm', description: 'Vidrio inastillable 6.4mm', sortOrder: 11 } });
+   110→  const gInast8 = await db.glassOption.create({ data: { name: 'Inastillable 8.4mm', code: 'inast-8mm', description: 'Vidrio inastillable 8.4mm', sortOrder: 12 } });
+   111→  const gCrInc6 = await db.glassOption.create({ data: { name: 'Cristal Incoloro 6mm', code: 'cr-inc-6mm', description: 'Cristal incoloro 6mm', sortOrder: 13 } });
+   112→  const gTermopanel = await db.glassOption.create({ data: { name: 'Termopanel', code: 'termopanel', description: 'Termopanel con cámara de aire', sortOrder: 14 } });
+   113→  const gReflex = await db.glassOption.create({ data: { name: 'Reflex Bronce 4mm', code: 'reflex-bronc', description: 'Vidrio reflex bronce 4mm', sortOrder: 15 } });
+   114→  const gInc4 = await db.glassOption.create({ data: { name: 'Incoloro 4mm', code: 'inc-4mm', description: 'Vidrio incoloro 4mm', sortOrder: 16 } });
+   115→  const gInc5 = await db.glassOption.create({ data: { name: 'Incoloro 5mm', code: 'inc-5mm', description: 'Vidrio incoloro 5mm', sortOrder: 17 } });
+   116→  const gInc6 = await db.glassOption.create({ data: { name: 'Incoloro 6mm', code: 'inc-6mm', description: 'Vidrio incoloro 6mm', sortOrder: 18 } });
+   117→
+   118→  // ═══════════════════════════════════════════
+   119→  // GLASS PRICES PER PRODUCT LINE (per m²)
+   120→  // ═══════════════════════════════════════════
+   121→  // Línea 5000 glass prices
+   122→  const l5kGlass = [
+   123→    [gDoble, 15900], [gTriple, 21200], [gCatedral, 18900], [gBronc4, 23320],
+   124→    [gCatColor, 23330], [gStopSol, 31520],
+   125→  ];
+   126→  for (const [g, p] of l5kGlass) {
+   127→    await db.productLineGlass.create({ data: { productLineId: l5000.id, glassOptionId: g.id, pricePerM2: p } });
+   128→  }
+   129→
+   130→  // Línea 7000 glass prices (lower — these are per m² for this line)
+   131→  const l7kGlass = [
+   132→    [gDoble, 5500], [gTriple, 7250], [gVitrea, 9000], [gBronc4, 8250],
+   133→    [gBronc5, 10125], [gCatedral, 6875], [gCatColor, 10560], [gCrInc6, 11000],
+   134→    [gSolarCool, 15750],
+   135→  ];
+   136→  for (const [g, p] of l7kGlass) {
+   137→    await db.productLineGlass.create({ data: { productLineId: l7000.id, glassOptionId: g.id, pricePerM2: p } });
+   138→  }
+   139→
+   140→  // Línea 8000 glass prices
+   141→  const l8kGlass = [
+   142→    [gTriple, 21200], [gVitrea, 26500], [gCrInc6, 31800], [gBronc4, 23320],
+   143→    [gBronc5, 29150], [gBronc6, 34980], [gCatedral, 18900], [gCatColor, 23330],
+   144→    [gSolarCool, 35810], [gInast6, 60230], [gTermopanel, 39600],
+   145→  ];
+   146→  for (const [g, p] of l8kGlass) {
+   147→    await db.productLineGlass.create({ data: { productLineId: l8000.id, glassOptionId: g.id, pricePerM2: p } });
+   148→  }
+   149→
+   150→  // Ventana con Brazo Ext. glass prices
+   151→  const bxtGlass = [
+   152→    [gDoble, 17020], [gTriple, 22690], [gVitrea, 28360], [gCatedral, 20790],
+   153→    [gCatColor, 25670], [gBronc4, 25660], [gBronc5, 32070], [gReflex, 34680],
+   154→    [gInast6, 66260],
+   155→  ];
+   156→  for (const [g, p] of bxtGlass) {
+   157→    await db.productLineGlass.create({ data: { productLineId: brazoExt.id, glassOptionId: g.id, pricePerM2: p } });
+   158→  }
+   159→
+   160→  // Ventana de Abatir glass prices
+   161→  const vabGlass = [
+   162→    [gDoble, 15900], [gTriple, 21200], [gVitrea, 26500], [gCatedral, 18900],
+   163→    [gCatColor, 23330], [gBronc4, 23320], [gBronc5, 29150],
+   164→  ];
+   165→  for (const [g, p] of vabGlass) {
+   166→    await db.productLineGlass.create({ data: { productLineId: ventAbatir.id, glassOptionId: g.id, pricePerM2: p } });
+   167→  }
+   168→
+   169→  // Centro Puerta 7095/5034 glass prices
+   170→  const cp70Glass = [
+   171→    [gDoble, 15900], [gTriple, 21200], [gVitrea, 26500], [gBronc4, 23320],
+   172→    [gBronc5, 29150], [gCatedral, 18900], [gCatColor, 23330],
+   173→  ];
+   174→  for (const [g, p] of cp70Glass) {
+   175→    await db.productLineGlass.create({ data: { productLineId: cp7095.id, glassOptionId: g.id, pricePerM2: p } });
+   176→  }
+   177→
+   178→  // Centro Puerta 30x60 glass
+   179→  const cp30Glass = [
+   180→    [gCrInc6, 19500], // Cristal 10mm
+   181→  ];
+   182→  for (const [g, p] of cp30Glass) {
+   183→    await db.productLineGlass.create({ data: { productLineId: cp3060.id, glassOptionId: g.id, pricePerM2: p } });
+   184→  }
+   185→  // Also add standard glass options for cp3060
+   186→  for (const [g, p] of cp70Glass) {
+   187→    await db.productLineGlass.create({ data: { productLineId: cp3060.id, glassOptionId: g.id, pricePerM2: p } });
+   188→  }
+   189→
+   190→  // Puerta Tubo glass prices
+   191→  const ptGlass = [
+   192→    [gDoble, 15900], [gTriple, 21200], [gVitrea, 26500], [gBronc4, 23320],
+   193→    [gBronc5, 29150], [gCatedral, 18900], [gCatColor, 23330], [gCrInc6, 31800],
+   194→    [gInast6, 60230], [gSolarCool, 35810],
+   195→  ];
+   196→  for (const [g, p] of ptGlass) {
+   197→    await db.productLineGlass.create({ data: { productLineId: puertaTubo.id, glassOptionId: g.id, pricePerM2: p } });
+   198→  }
+   199→
+   200→  // Fijo Tubular glass prices
+   201→  const ftGlass = [
+   202→    [gInc4, 22690], [gInc5, 28360], [gInc6, 34030], [gBronc4, 25660],
+   203→    [gBronc5, 32070], [gBronc6, 38480], [gCatedral, 20790], [gCatColor, 25670],
+   204→    [gSolarCool, 39400], [gInast6, 66260], [gInast8, 88430],
+   205→  ];
+   206→  for (const [g, p] of ftGlass) {
+   207→    await db.productLineGlass.create({ data: { productLineId: fijoTub.id, glassOptionId: g.id, pricePerM2: p } });
+   208→  }
+   209→
+   210→  // Fijo con Centro de Puerta glass prices
+   211→  const fcpGlass = [
+   212→    [gDoble, 15900], [gTriple, 21200], [gVitrea, 26500], [gBronc4, 23320],
+   213→    [gBronc5, 29150], [gCatedral, 18900], [gCatColor, 23330], [gStopSol, 34680],
+   214→    [gInast6, 60230],
+   215→  ];
+   216→  for (const [g, p] of fcpGlass) {
+   217→    await db.productLineGlass.create({ data: { productLineId: fijoCP.id, glassOptionId: g.id, pricePerM2: p } });
+   218→  }
+   219→
+   220→  // Celosías glass prices
+   221→  const celGlass = [
+   222→    [gDoble, 15900], [gTriple, 21200], [gVitrea, 26500], [gBronc4, 23320],
+   223→    [gBronc5, 29150], [gCatedral, 18900], [gCatColor, 23330], [gCrInc6, 31800],
+   224→  ];
+   225→  for (const [g, p] of celGlass) {
+   226→    await db.productLineGlass.create({ data: { productLineId: celosias.id, glassOptionId: g.id, pricePerM2: p } });
+   227→  }
+   228→
+   229→  // Shower Door glass prices (uses acrílicos and special)
+   230→  const sdGlass = [
+   231→    [gInc4, 20200], [gBronc4, 25660], [gBronc5, 32070],
+   232→  ];
+   233→  for (const [g, p] of sdGlass) {
+   234→    await db.productLineGlass.create({ data: { productLineId: showerDoor.id, glassOptionId: g.id, pricePerM2: p } });
+   235→  }
+   236→
+   237→  // ═══════════════════════════════════════════
+   238→  // ACCESSORIES (real Crispieri accessories with prices)
+   239→  // ═══════════════════════════════════════════
+   240→  const accBurlete = await db.accessory.create({ data: { name: 'Burlete', code: 'burlete', description: 'Burlete para sellado', price: 300, priceCafe: 300, unit: 'metro', sortOrder: 1 } });
+   241→  const accFelpa = await db.accessory.create({ data: { name: 'Felpa', code: 'felpa', description: 'Felpa para corredera (+10% holgura)', price: 130, priceCafe: 140, unit: 'metro', sortOrder: 2 } });
+   242→  const accRodamiento = await db.accessory.create({ data: { name: 'Rodamiento', code: 'rodamiento', description: 'Rodamiento para corredera', price: 350, priceCafe: 350, unit: 'par', sortOrder: 3 } });
+   243→  const accPestillo = await db.accessory.create({ data: { name: 'Pestillo', code: 'pestillo', description: 'Pestillo de seguridad', price: 1200, priceCafe: 1400, unit: 'unidad', sortOrder: 4 } });
+   244→  const accBisagra = await db.accessory.create({ data: { name: 'Bisagra', code: 'bisagra', description: 'Bisagra para abatir', price: 630, priceCafe: 830, unit: 'par', sortOrder: 5 } });
+   245→  const accManilla = await db.accessory.create({ data: { name: 'Manilla', code: 'manilla', description: 'Manilla para ventana', price: 2630, priceCafe: 2880, unit: 'unidad', sortOrder: 6 } });
+   246→  const accBrazoExt = await db.accessory.create({ data: { name: 'Brazo Exterior', code: 'brazo-ext', description: 'Brazo exterior para proyectante', price: 5700, priceCafe: 5700, unit: 'unidad', sortOrder: 7 } });
+   247→  const accQuicio = await db.accessory.create({ data: { name: 'Quicio Scanavini', code: 'quicio', description: 'Quicio Scanavini para puerta', price: 27000, priceCafe: 27000, unit: 'par', sortOrder: 8 } });
+   248→  const accAmarre = await db.accessory.create({ data: { name: 'Amarre', code: 'amarre', description: 'Amarre angular', price: 500, priceCafe: 500, unit: 'unidad', sortOrder: 9 } });
+   249→  const accSilicona = await db.accessory.create({ data: { name: 'Silicona', code: 'silicona', description: 'Silicona sellante', price: 1300, priceCafe: 1950, unit: 'unidad', sortOrder: 10 } });
+   250→  const accTarugo = await db.accessory.create({ data: { name: 'Tarugo/Tornillo', code: 'tarugo-tornillo', description: 'Tarugos y tornillos de fijación', price: 1500, priceCafe: 1500, unit: 'juego', sortOrder: 11 } });
+   251→  const accTTRS = await db.accessory.create({ data: { name: 'T.T.R.S.', code: 'ttrs', description: 'Tornillo, tarugo, roldana, separador', price: 1000, priceCafe: 1000, unit: 'juego', sortOrder: 12 } });
+   252→
+   253→  // Associate accessories with lines
+   254→  // Línea 5000: burlete, felpa, rodamiento, pestillo
+   255→  for (const a of [accBurlete, accFelpa, accRodamiento, accPestillo]) {
+   256→    await db.productLineAccessory.create({ data: { productLineId: l5000.id, accessoryId: a.id } });
+   257→  }
+   258→  // Línea 7000: burlete, felpa, rodamiento, pestillo
+   259→  for (const a of [accBurlete, accFelpa, accRodamiento, accPestillo]) {
+   260→    await db.productLineAccessory.create({ data: { productLineId: l7000.id, accessoryId: a.id } });
+   261→  }
+   262→  // Línea 8000: burlete, felpa, rodamiento, pestillo
+   263→  for (const a of [accBurlete, accFelpa, accRodamiento, accPestillo]) {
+   264→    await db.productLineAccessory.create({ data: { productLineId: l8000.id, accessoryId: a.id } });
+   265→  }
+   266→  // Brazo Ext: felpa, manilla, brazo exterior, amarre
+   267→  for (const a of [accFelpa, accManilla, accBrazoExt, accAmarre]) {
+   268→    await db.productLineAccessory.create({ data: { productLineId: brazoExt.id, accessoryId: a.id } });
+   269→  }
+   270→  // Ventana Abatir: burlete, felpa, pestillo, bisagra, brazo ext
+   271→  for (const a of [accBurlete, accFelpa, accPestillo, accBisagra, accBrazoExt]) {
+   272→    await db.productLineAccessory.create({ data: { productLineId: ventAbatir.id, accessoryId: a.id } });
+   273→  }
+   274→  // CP 7095: felpa, bisagra, TTRS
+   275→  for (const a of [accFelpa, accBisagra, accTTRS]) {
+   276→    await db.productLineAccessory.create({ data: { productLineId: cp7095.id, accessoryId: a.id } });
+   277→  }
+   278→  // CP 30x60: quicio, TTRS
+   279→  for (const a of [accQuicio, accTTRS]) {
+   280→    await db.productLineAccessory.create({ data: { productLineId: cp3060.id, accessoryId: a.id } });
+   281→  }
+   282→  // Puerta Tubo: TTRS
+   283→  await db.productLineAccessory.create({ data: { productLineId: puertaTubo.id, accessoryId: accTTRS.id } });
+   284→  // Fijo Tubular: silicona, tarugo
+   285→  for (const a of [accSilicona, accTarugo]) {
+   286→    await db.productLineAccessory.create({ data: { productLineId: fijoTub.id, accessoryId: a.id } });
+   287→  }
+   288→  // Fijo CP: silicona, tarugo
+   289→  for (const a of [accSilicona, accTarugo]) {
+   290→    await db.productLineAccessory.create({ data: { productLineId: fijoCP.id, accessoryId: a.id } });
+   291→  }
+   292→  // Celosías: escuadras
+   293→  // Shower Door: burlete, rodamiento
+   294→  for (const a of [accBurlete, accRodamiento]) {
+   295→    await db.productLineAccessory.create({ data: { productLineId: showerDoor.id, accessoryId: a.id } });
+   296→  }
+   297→
+   298→  // ═══════════════════════════════════════════
+   299→  // PROFILE PRICES (real aluminum profile prices)
+   300→  // ═══════════════════════════════════════════
+   301→  // Línea 5000 profiles
+   302→  const l5kProfiles = [
+   303→    ['Riel Inferior', '5001', 8408, 9861],
+   304→    ['Riel Superior', '5002', 9914, 11628],
+   305→    ['Jamba', '5003', 9574, 11229],
+   306→    ['Cabecera Inferior', '5004', 10765, 12626],
+   307→    ['Cabecera Superior', '5005', 8918, 10460],
+   308→    ['Traslapo', '5006', 9331, 10944],
+   309→    ['Pierna', '5007', 10473, 12284],
+   310→    ['Palillo', '7005', 10498, 12312],
+   311→    ['Tubo Rectangular 30x60', '30x60', 17132, 20093],
+   312→  ];
+   313→  for (const [name, code, nat, caf] of l5kProfiles) {
+   314→    await db.profilePrice.create({ data: { productLineId: l5000.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   315→  }
+   316→
+   317→  // Línea 7000 profiles
+   318→  const l7kProfiles = [
+   319→    ['Riel Inferior', '7001', 11275, 13224],
+   320→    ['Riel Superior', '7002', 14167, 16616],
+   321→    ['Jamba', '7003', 10303, 12084],
+   322→    ['Cabecera Inferior', '7004', 13705, 16074],
+   323→    ['Cabecera Superior', '7005', 10498, 12312],
+   324→    ['Traslapo', '7006', 11810, 13851],
+   325→    ['Pierna', '7007', 11154, 13082],
+   326→    ['Palillo', '7005', 10498, 12312],
+   327→    ['Perfil 4ª Hoja', '7009', 6099, 7154],
+   328→    ['Placa Aluminio', '5859', 14500, 17100],
+   329→    ['Tubo Rectangular 30x60', '30x60', 17978, 21150],
+   330→    ['Tubo Rectangular 76x25', '76x25', 20273, 23850],
+   331→  ];
+   332→  for (const [name, code, nat, caf] of l7kProfiles) {
+   333→    await db.profilePrice.create({ data: { productLineId: l7000.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   334→  }
+   335→
+   336→  // Línea 8000 profiles
+   337→  const l8kProfiles = [
+   338→    ['Riel Inferior', '8001', 30540, 32990],
+   339→    ['Riel Superior', '8002', 31300, 33800],
+   340→    ['Jamba', '8003', 23290, 25160],
+   341→    ['Cabecera Inferior', '8004', 28560, 30860],
+   342→    ['Cabecera Superior', '8005', 20190, 21800],
+   343→    ['Traslapo', '8006', 24780, 26760],
+   344→    ['Pierna', '8007', 24210, 26150],
+   345→    ['Palillo', '8013', 22370, 24170],
+   346→    ['Perfil 4ª Hoja', '8017', 5030, 5900],
+   347→    ['Placa Aluminio', '5859', 21150, 22850],
+   348→    ['Tubo Rectangular 30x60', '30x60', 28420, 30690],
+   349→    ['Tubo Rectangular 76x25', '76x25', 28590, 30880],
+   350→  ];
+   351→  for (const [name, code, nat, caf] of l8kProfiles) {
+   352→    await db.profilePrice.create({ data: { productLineId: l8000.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   353→  }
+   354→
+   355→  // Ventana Brazo Ext. profiles
+   356→  const bxtProfiles = [
+   357→    ['Marco', '3201', 10830, 13918.72],
+   358→    ['Marco Hoja', '3202', 17070, 21938.36],
+   359→    ['Junquillo', '3203', 5400, 6940.08],
+   360→    ['Amarre', 'A-09', 500, 500],
+   361→    ['Tubo Rectangular 30x60', '30x60', 23670, 30420.68],
+   362→    ['Pilar Marco', '3204', 20160, 25909.63],
+   363→  ];
+   364→  for (const [name, code, nat, caf] of bxtProfiles) {
+   365→    await db.profilePrice.create({ data: { productLineId: brazoExt.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   366→  }
+   367→
+   368→  // Ventana de Abatir profiles
+   369→  const vabProfiles = [
+   370→    ['Pierna', '5007', 11500, 12930],
+   371→    ['Centro Puerta', '7659', 9540, 11223],
+   372→    ['Junquillo', '5687', 2372, 2790],
+   373→    ['Amarre', 'A-O9', 330, 389],
+   374→    ['Tubo Rectangular 30x60', '30x60', 17978, 21150],
+   375→    ['Angulo 25x12', '25x12', 2958, 3480],
+   376→    ['Canal U 20x12', '20x12', 3902, 4590],
+   377→  ];
+   378→  for (const [name, code, nat, caf] of vabProfiles) {
+   379→    await db.profilePrice.create({ data: { productLineId: ventAbatir.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   380→  }
+   381→
+   382→  // Centro Puerta 7095/5034 profiles
+   383→  const cp70Profiles = [
+   384→    ['Centro Puerta 7095', '7095', 18600, 20090],
+   385→    ['Centro Puerta 5034', '5034', 24800, 26090],
+   386→    ['Junquillo 10x10', '5009', 3410, 3690],
+   387→  ];
+   388→  for (const [name, code, nat, caf] of cp70Profiles) {
+   389→    await db.profilePrice.create({ data: { productLineId: cp7095.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   390→  }
+   391→
+   392→  // Centro Puerta 30x60/40x80 profiles
+   393→  const cp30Profiles = [
+   394→    ['Centro Puerta 30x60', '30x60', 17135, 20100],
+   395→    ['Centro Puerta 40x80', '40x80', 23040, 27020],
+   396→    ['Junquillo 10x10', '5029', 4205, 4950],
+   397→  ];
+   398→  for (const [name, code, nat, caf] of cp30Profiles) {
+   399→    await db.profilePrice.create({ data: { productLineId: cp3060.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   400→  }
+   401→
+   402→  // Puerta Tubo 40x40/40x100 profiles
+   403→  const ptProfiles = [
+   404→    ['Tubo 40x40', 'C-05', 25590, 27640],
+   405→    ['Tubo 40x100', 'R-07', 51820, 55970],
+   406→    ['Tubo 40x80', 'R-06', 39640, 42820],
+   407→    ['Tubo 30x60', 'R-05', 28420, 30690],
+   408→    ['Placa Aluminio', '5869', 21150, 22850],
+   409→    ['Angulo 25x12', '5007', 2958, 3480],
+   410→    ['Junquillo 10x10', '5009', 3410, 3690],
+   411→    ['Amarre', '5066', 42840, 42840],
+   412→  ];
+   413→  for (const [name, code, nat, caf] of ptProfiles) {
+   414→    await db.profilePrice.create({ data: { productLineId: puertaTubo.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   415→  }
+   416→
+   417→  // Fijo Tubular Rectangular profiles
+   418→  const ftProfiles = [
+   419→    ['Tubo Rectangular 30x60', '30x60', 19971, 25645],
+   420→    ['Tubo Rectangular 40x80', '40x80', 25485, 43760],
+   421→    ['Junquillo 10x10', '5051', 2819, 3306],
+   422→    ['Junquillo 20x12', '5029', 4204, 4931],
+   423→    ['Tubo 30x60', 'R-05', 19971, 20093],
+   424→    ['Placa Aluminio', '67', 30000, 30000],
+   425→  ];
+   426→  for (const [name, code, nat, caf] of ftProfiles) {
+   427→    await db.profilePrice.create({ data: { productLineId: fijoTub.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   428→  }
+   429→
+   430→  // Fijo con Centro de Puerta profiles
+   431→  const fcpProfiles = [
+   432→    ['Centro Puerta 7095', '7095', 10473, 11040],
+   433→    ['Centro Puerta 5034', '5034', 14382, 16920],
+   434→    ['Junquillo 10x10', '5009', 2627, 3090],
+   435→    ['Junquillo 20x12', '5098', 3902, 4590],
+   436→    ['Tubo 30x60', 'R-05', 17978, 21150],
+   437→  ];
+   438→  for (const [name, code, nat, caf] of fcpProfiles) {
+   439→    await db.profilePrice.create({ data: { productLineId: fijoCP.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   440→  }
+   441→
+   442→  // Celosías profiles
+   443→  const celProfiles = [
+   444→    ['Marco', '3201', 7752, 9092],
+   445→    ['Junquillo', '3203', 3669, 4304],
+   446→    ['Pilar Marco', '3204', 13851, 16245],
+   447→    ['Tubo Rectangular 30x60', '30x60', 17978, 21150],
+   448→    ['Tubo Rectangular 76x25', '76x25', 20273, 23850],
+   449→  ];
+   450→  for (const [name, code, nat, caf] of celProfiles) {
+   451→    await db.profilePrice.create({ data: { productLineId: celosias.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   452→  }
+   453→
+   454→  // Shower Door AM-12 profiles
+   455→  const sdProfiles = [
+   456→    ['Riel Inferior', '1207', 18110, 19560],
+   457→    ['Jamba', '1202', 13270, 14350],
+   458→    ['Riel Superior', '1203', 30090, 32500],
+   459→    ['Bastidor', '1204', 11130, 12040],
+   460→    ['Jamba Esquinera', 'SD04', 26030, 28120],
+   461→  ];
+   462→  for (const [name, code, nat, caf] of sdProfiles) {
+   463→    await db.profilePrice.create({ data: { productLineId: showerDoor.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
+   464→  }
+   465→
+   466→  // ═══════════════════════════════════════════
+   467→  // PRICING RULES
+   468→  // ═══════════════════════════════════════════
+   469→  for (const l of allLines) {
+   470→    await db.pricingRule.create({ data: { productLineId: l.id, name: 'Área mínima de cotización', ruleType: 'minimum_area', value: 0.5, unit: 'm2' } });
+   471→    await db.pricingRule.create({ data: { productLineId: l.id, name: 'Ancho máximo', ruleType: 'max_dimension_width', value: 4000, unit: 'mm' } });
+   472→    await db.pricingRule.create({ data: { productLineId: l.id, name: 'Alto máximo', ruleType: 'max_dimension_height', value: 3000, unit: 'mm' } });
+   473→    await db.pricingRule.create({ data: { productLineId: l.id, name: 'Redondeo a múltiplo de', ruleType: 'rounding_multiple', value: 1000, unit: 'CLP' } });
+   474→  }
+   475→
+   476→  console.log('✅ Seed completed successfully!');
+   477→  console.log(`  - 6 product types`);
+   478→  console.log(`  - 12 product lines with real Crispieri margins`);
+   479→  console.log(`  - 6 colors with real surcharges`);
+   480→  console.log(`  - 18 glass options`);
+   481→  console.log(`  - Glass prices per line (${12}+ line-glass combos)`);
+   482→  console.log(`  - 12 accessories with natural/café prices`);
+   483→  console.log(`  - Profile prices for all 12 lines`);
+   484→  console.log(`  - 48 pricing rules`);
+   485→}
+   486→
+   487→main()
+   488→  .then(async () => {
+   489→    await db.$disconnect();
+   490→  })
+   491→  .catch(async (e) => {
+   492→    console.error('❌ Seed failed:', e);
+   493→    await db.$disconnect();
+   494→    process.exit(1);
+   495→  });
+   496→

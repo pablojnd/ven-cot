@@ -1,11 +1,14 @@
 'use client';
 
 import { useQuoteStore, getAvailableAccessories } from '@/stores/quoteStore';
+import { getCurrentColor } from '@/stores/quoteStore';
 
 export default function AccessoriesSelector() {
   const store = useQuoteStore();
   const accessories = getAvailableAccessories(store);
   const selectedIds = store.selectedAccessories.map((a) => a.accessoryId);
+  const currentColor = getCurrentColor(store);
+  const isCafeColor = currentColor?.code === 'cafe' || currentColor?.code === 'titanio' || currentColor?.code === 'blanco' || currentColor?.code === 'madera';
 
   if (!store.productLineId) return null;
 
@@ -23,6 +26,7 @@ export default function AccessoriesSelector() {
         {accessories.map((acc) => {
           const isSelected = selectedIds.includes(acc.id);
           const selectedAcc = store.selectedAccessories.find((a) => a.accessoryId === acc.id);
+          const displayPrice = isCafeColor && acc.priceCafe > 0 ? acc.priceCafe : acc.price;
 
           return (
             <div
@@ -33,7 +37,6 @@ export default function AccessoriesSelector() {
                   : 'border-gray-200 bg-white'
               }`}
             >
-              {/* Checkbox */}
               <button
                 onClick={() => store.toggleAccessory(acc.id)}
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
@@ -49,7 +52,6 @@ export default function AccessoriesSelector() {
                 )}
               </button>
 
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-800">{acc.name}</div>
                 {acc.description && (
@@ -57,12 +59,13 @@ export default function AccessoriesSelector() {
                 )}
               </div>
 
-              {/* Price */}
               <div className="text-sm font-semibold text-gray-700 shrink-0">
-                ${Math.round(acc.price).toLocaleString('es-CL')}
+                ${Math.round(displayPrice).toLocaleString('es-CL')}
+                {acc.unit !== 'unidad' && (
+                  <span className="text-xs text-gray-400 font-normal">/{acc.unit}</span>
+                )}
               </div>
 
-              {/* Quantity (if selected) */}
               {isSelected && (
                 <div className="flex items-center gap-1 shrink-0">
                   <button

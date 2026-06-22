@@ -21,10 +21,10 @@ export async function GET(
               select: { id: true, name: true, code: true, icon: true },
             },
             productLine: {
-              select: { id: true, name: true, code: true, pricePerM2: true },
+              select: { id: true, name: true, code: true, marginPct: true, marginPctCafe: true },
             },
             glassOption: {
-              select: { id: true, name: true, code: true, surchargePct: true },
+              select: { id: true, name: true, code: true, description: true },
             },
             color: {
               select: { id: true, name: true, code: true, hexValue: true, surchargePct: true, isRAL: true },
@@ -32,7 +32,7 @@ export async function GET(
             accessories: {
               include: {
                 accessory: {
-                  select: { id: true, name: true, code: true, price: true, unit: true },
+                  select: { id: true, name: true, code: true, price: true, priceCafe: true, unit: true },
                 },
               },
             },

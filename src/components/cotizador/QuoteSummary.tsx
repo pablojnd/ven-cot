@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuoteStore, getCurrentProductType, getCurrentProductLine, getCurrentColor, getCurrentGlassOption, getAvailableAccessories } from '@/stores/quoteStore';
+import { useQuoteStore, getCurrentProductType, getCurrentProductLine, getCurrentColor, getCurrentGlassOption, getAvailableAccessoriesForState } from '@/stores/quoteStore';
 import { Eye, Package, Ruler, Palette, Layers, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import WindowPreview from './WindowPreview';
@@ -11,7 +11,7 @@ export default function QuoteSummary() {
   const productLine = getCurrentProductLine(store);
   const color = getCurrentColor(store);
   const glass = getCurrentGlassOption(store);
-  const availableAccessories = getAvailableAccessories(store);
+  const availableAccessories = getAvailableAccessoriesForState(store);
   const selectedAccessoryIds = store.selectedAccessories.map((a) => a.accessoryId);
   const selectedAccessoryNames = availableAccessories
     .filter((a) => selectedAccessoryIds.includes(a.id))
@@ -91,7 +91,7 @@ export default function QuoteSummary() {
             const result = await store.submitQuote();
             if (result) {
               toast.success(`Cotización ${result.quoteNumber} generada`, {
-                description: `Total: $${Math.round(result.totalAmount).toLocaleString('es-CL')} CLP`,
+                description: `Total: $${Math.round(result.totalAmount + result.totalTax).toLocaleString('es-CL')} CLP (con IVA)`,
               });
             }
           }}
@@ -142,7 +142,7 @@ export default function QuoteSummary() {
               Cotización {store.lastQuote.quoteNumber} generada
             </p>
             <p className="text-xs text-emerald-600 mt-1">
-              Total: ${Math.round(store.lastQuote.totalAmount).toLocaleString('es-CL')} CLP
+              {`Total: $${Math.round(store.lastQuote.totalAmount + store.lastQuote.totalTax).toLocaleString('es-CL')} CLP (con IVA)`}
             </p>
           </div>
         )}
@@ -168,44 +168,36 @@ function PriceBreakdown() {
 
   const fmt = (n: number) => `$${Math.round(n).toLocaleString('es-CL')}`;
   const qty = store.quantity;
-  const perUnitSubtotal = estimate.basePrice + estimate.colorSurcharge + estimate.glassSurcharge + estimate.panelSurcharge + estimate.accessoriesTotal;
 
   return (
     <div className="space-y-2">
       <h4 className="text-sm font-semibold text-gray-700">Resumen de precio</h4>
       <div className="bg-gray-50 rounded-xl p-4 space-y-2 border border-gray-100">
         {/* Per-unit breakdown */}
-        <PriceRow label={`Precio base${qty > 1 ? ' (c/u)' : ''}`} value={fmt(estimate.basePrice)} />
-        {estimate.colorSurcharge > 0 && (
-          <PriceRow label="Recargo color" value={`+${fmt(estimate.colorSurcharge)}`} muted />
-        )}
-        {estimate.glassSurcharge > 0 && (
-          <PriceRow label="Recargo vidrio" value={`+${fmt(estimate.glassSurcharge)}`} muted />
-        )}
-        {estimate.panelSurcharge > 0 && (
-          <PriceRow label="Recargo hojas" value={`+${fmt(estimate.panelSurcharge)}`} muted />
-        )}
+        <PriceRow label={`Perfiles${qty > 1 ? ' (c/u)' : ''}`} value={fmt(estimate.profilesTotal)} />
+        <PriceRow label="Vidrio" value={fmt(estimate.glassTotal)} muted />
         {estimate.accessoriesTotal > 0 && (
-          <PriceRow label="Accesorios" value={`+${fmt(estimate.accessoriesTotal)}`} muted />
+          <PriceRow label="Accesorios" value={fmt(estimate.accessoriesTotal)} muted />
         )}
-        {qty > 1 && (
-          <>
-            <div className="border-t border-gray-200 my-1" />
-            <PriceRow label={`Subtotal c/u (${perUnitSubtotal > 0 ? fmt(perUnitSubtotal) : '—'})`} value={fmt(estimate.subtotal)} />
-            <PriceRow label={`Cantidad`} value={`× ${qty}`} />
-          </>
-        )}
+        <PriceRow label="Mano de obra" value={fmt(estimate.laborTotal)} muted />
         <div className="border-t border-gray-200 my-1" />
         <PriceRow label="Subtotal" value={fmt(estimate.subtotal)} />
+        <PriceRow label="Margen" value={`+${fmt(estimate.marginAmount)}`} muted />
+        <PriceRow label={`Pre-total (redond.)`} value={fmt(estimate.preTotal)} />
+        {qty > 1 && (
+          <PriceRow label={`Cantidad`} value={`× ${qty}`} />
+        )}
+        <div className="border-t border-gray-200 my-1" />
+        <PriceRow label="Subtotal neto" value={fmt(estimate.total)} />
         <PriceRow label="IVA (19%)" value={fmt(estimate.tax)} />
         <div className="border-t border-gray-200 my-1" />
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold text-gray-800">Total estimado</span>
-          <span className="text-lg font-bold text-emerald-600">{fmt(estimate.total)}</span>
+          <span className="text-lg font-bold text-emerald-600">{fmt(estimate.total + estimate.tax)}</span>
         </div>
         {qty > 1 && (
           <div className="text-xs text-gray-400 text-right">
-            {fmt(estimate.unitTotal)} c/u
+            {fmt(estimate.unitTotal + estimate.unitTotal * 0.19)} c/u (con IVA)
           </div>
         )}
       </div>

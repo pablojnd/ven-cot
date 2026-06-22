@@ -95,8 +95,16 @@ export async function POST(request: NextRequest) {
           throw new Error(`Product line not found: ${item.productLineId}`);
         }
 
+        // Fetch product type
+        const productType = await tx.productType.findUnique({
+          where: { id: item.productTypeId },
+        });
+        if (!productType) {
+          throw new Error(`Product type not found: ${item.productTypeId}`);
+        }
+
         // Fetch color if provided
-        let colorSurchargePct = 0;
+        let colorCode = 'natural';
         if (item.colorId) {
           const color = await tx.color.findUnique({
             where: { id: item.colorId },
@@ -104,16 +112,31 @@ export async function POST(request: NextRequest) {
           if (!color) {
             throw new Error(`Color not found: ${item.colorId}`);
           }
-          colorSurchargePct = color.surchargePct;
+          colorCode = color.code;
         }
 
-        // Fetch glass option
-        const glassOption = await tx.glassOption.findUnique({
-          where: { id: item.glassOptionId },
+        // Fetch glass price from ProductLineGlass
+        const productLineGlass = await tx.productLineGlass.findUnique({
+          where: {
+            productLineId_glassOptionId: {
+              productLineId: item.productLineId,
+              glassOptionId: item.glassOptionId,
+            },
+          },
         });
-        if (!glassOption) {
-          throw new Error(`Glass option not found: ${item.glassOptionId}`);
+        if (!productLineGlass) {
+          throw new Error(`Glass option not available for this product line: ${item.glassOptionId}`);
         }
+        const glassPricePerM2 = productLineGlass.pricePerM2;
+
+        // Fetch profile prices for this product line
+        const profilePrices = await tx.profilePrice.findMany({
+          where: {
+            productLineId: item.productLineId,
+            isActive: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+        });
 
         // Fetch pricing rules for this product line
         const pricingRules = await tx.pricingRule.findMany({
@@ -123,19 +146,16 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // Find panel surcharge rule
-        const panelSurchargeRule = pricingRules.find(
-          (r) => r.ruleType === 'surcharge_per_panel' && item.panelCount >= (r.minPanels ?? 2)
-        );
+        // Get rounding multiple
+        const roundingRule = pricingRules.find(r => r.ruleType === 'rounding_multiple');
+        const roundingMultiple = roundingRule?.value ?? 1000;
 
-        // Find minimum area rule
-        const minimumAreaRule = pricingRules.find(
-          (r) => r.ruleType === 'minimum_area'
-        );
-        const minimumArea = minimumAreaRule ? minimumAreaRule.value : undefined;
+        // Get labor cost
+        const laborRule = pricingRules.find(r => r.ruleType === 'labor_cost');
+        const laborCost = laborRule?.value ?? 20000;
 
-        // Fetch accessories
-        const accessoryPrices: { price: number; quantity: number }[] = [];
+        // Fetch accessories with their prices
+        const accessoryPrices: { name: string; code: string; price: number; priceCafe: number; unit: string; quantity: number }[] = [];
         for (const acc of item.accessories) {
           const accessory = await tx.accessory.findUnique({
             where: { id: acc.accessoryId },
@@ -143,26 +163,41 @@ export async function POST(request: NextRequest) {
           if (!accessory) {
             throw new Error(`Accessory not found: ${acc.accessoryId}`);
           }
-          accessoryPrices.push({ price: accessory.price, quantity: acc.quantity });
+          accessoryPrices.push({
+            name: accessory.name,
+            code: accessory.code,
+            price: accessory.price,
+            priceCafe: accessory.priceCafe,
+            unit: accessory.unit,
+            quantity: acc.quantity,
+          });
         }
 
-        // Calculate pricing
+        // Calculate pricing using real Crispieri formula
         const breakdown = calculatePrice({
           widthMm: item.widthMm,
           heightMm: item.heightMm,
           panelCount: item.panelCount,
           quantity: item.quantity,
-          pricePerM2: productLine.pricePerM2,
-          colorSurchargePct,
-          glassSurchargePct: glassOption.surchargePct,
+          productLineCode: productLine.code,
+          productTypeCode: productType.code,
+          marginPct: productLine.marginPct,
+          marginPctCafe: productLine.marginPctCafe,
+          colorCode,
+          glassPricePerM2,
+          profilePrices: profilePrices.map(pp => ({
+            profileName: pp.profileName,
+            profileCode: pp.profileCode,
+            priceNatural: pp.priceNatural,
+            priceCafe: pp.priceCafe,
+            stripLengthM: pp.stripLengthM,
+          })),
           accessoryPrices,
-          panelSurchargeRule: panelSurchargeRule
-            ? { value: panelSurchargeRule.value, minPanels: panelSurchargeRule.minPanels ?? 2 }
-            : undefined,
-          minimumArea,
+          laborCost,
+          roundingMultiple,
         });
 
-        // Create quote item
+        // Create quote item with new schema fields
         const quoteItem = await tx.quoteItem.create({
           data: {
             quoteId: newQuote.id,
@@ -175,12 +210,13 @@ export async function POST(request: NextRequest) {
             panelCount: item.panelCount,
             quantity: item.quantity,
             observations: item.observations || null,
-            basePrice: breakdown.basePrice,
-            colorSurcharge: breakdown.colorSurcharge,
-            glassSurcharge: breakdown.glassSurcharge,
-            panelSurcharge: breakdown.panelSurcharge,
+            profilesTotal: breakdown.profilesTotal,
+            glassTotal: breakdown.glassTotal,
             accessoriesTotal: breakdown.accessoriesTotal,
+            laborTotal: breakdown.laborTotal,
             subtotal: breakdown.subtotal,
+            marginAmount: breakdown.marginAmount,
+            preTotal: breakdown.preTotal,
             tax: breakdown.tax,
             total: breakdown.total,
           },
@@ -192,13 +228,15 @@ export async function POST(request: NextRequest) {
             where: { id: acc.accessoryId },
           });
           if (accessory) {
+            const useCafePrice = colorCode !== 'natural';
+            const unitPrice = useCafePrice ? accessory.priceCafe : accessory.price;
             await tx.quoteItemAccessory.create({
               data: {
                 quoteItemId: quoteItem.id,
                 accessoryId: acc.accessoryId,
                 quantity: acc.quantity,
-                unitPrice: accessory.price,
-                totalPrice: accessory.price * acc.quantity,
+                unitPrice,
+                totalPrice: unitPrice * acc.quantity,
               },
             });
           }
@@ -210,14 +248,22 @@ export async function POST(request: NextRequest) {
           heightMm: item.heightMm,
           panelCount: item.panelCount,
           quantity: item.quantity,
-          pricePerM2: productLine.pricePerM2,
-          colorSurchargePct,
-          glassSurchargePct: glassOption.surchargePct,
+          productLineCode: productLine.code,
+          productTypeCode: productType.code,
+          marginPct: productLine.marginPct,
+          marginPctCafe: productLine.marginPctCafe,
+          colorCode,
+          glassPricePerM2,
+          profilePrices: profilePrices.map(pp => ({
+            profileName: pp.profileName,
+            profileCode: pp.profileCode,
+            priceNatural: pp.priceNatural,
+            priceCafe: pp.priceCafe,
+            stripLengthM: pp.stripLengthM,
+          })),
           accessoryPrices,
-          panelSurchargeRule: panelSurchargeRule
-            ? { value: panelSurchargeRule.value, minPanels: panelSurchargeRule.minPanels ?? 2 }
-            : undefined,
-          minimumArea,
+          laborCost,
+          roundingMultiple,
         });
 
         for (const record of breakdownRecords) {
@@ -233,7 +279,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Accumulate totals
+        // Accumulate totals (totalAmount = preTotal without IVA, as per Crispieri convention)
         totalSubtotal += breakdown.subtotal;
         totalTax += breakdown.tax;
         totalAmount += breakdown.total;

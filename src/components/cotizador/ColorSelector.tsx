@@ -21,9 +21,8 @@ export default function ColorSelector() {
       <div className="flex flex-wrap gap-3">
         {colors.map((color) => {
           const isSelected = color.id === selectedId;
-          // For display, use a contrasting border for light colors
-          const isLight = color.hexValue && ['#FFFFFF', '#FFF'].some(v => color.hexValue?.toUpperCase().startsWith(v));
-          
+          const isLight = color.hexValue && ['#FFFFFF', '#FFF', '#C0C0C0'].some(v => color.hexValue?.toUpperCase().startsWith(v));
+
           return (
             <button
               key={color.id}
@@ -34,7 +33,6 @@ export default function ColorSelector() {
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              {/* Check indicator */}
               {isSelected && (
                 <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
                   <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -42,16 +40,13 @@ export default function ColorSelector() {
                   </svg>
                 </div>
               )}
-              {/* Swatch */}
               <div
                 className={`w-10 h-10 rounded-lg border-2 ${isLight ? 'border-gray-300' : 'border-transparent'} shadow-inner`}
                 style={{ backgroundColor: color.hexValue || '#888888' }}
               />
-              {/* Label */}
               <span className={`text-xs font-medium text-center leading-tight ${isSelected ? 'text-[#0D5C63]' : 'text-gray-600'}`}>
                 {color.name}
               </span>
-              {/* Surcharge badge */}
               {color.surchargePct > 0 && (
                 <span className="text-[10px] text-amber-600 font-medium">
                   +{color.surchargePct}%
