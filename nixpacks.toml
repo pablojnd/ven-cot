@@ -1,0 +1,3 @@
+bun install --frozen-lockfile
+bunx prisma generate
+bun run build
