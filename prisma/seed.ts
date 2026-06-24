@@ -63,9 +63,8 @@ async function main() {
   const titanio = await db.color.create({ data: { name: 'Titanio', code: 'titanio', hexValue: '#4A4A4A', surchargePct: 10, sortOrder: 3 } });
   const blanco = await db.color.create({ data: { name: 'Blanco', code: 'blanco', hexValue: '#FFFFFF', surchargePct: 10, sortOrder: 4 } });
   const madera = await db.color.create({ data: { name: 'Madera', code: 'madera', hexValue: '#8B6914', surchargePct: 15, sortOrder: 5 } });
-  const personalizado = await db.color.create({ data: { name: 'Personalizado RAL', code: 'ral', hexValue: '#888888', surchargePct: 20, isRAL: true, sortOrder: 6 } });
 
-  const allColors = [natural, cafe, titanio, blanco, madera, personalizado];
+  const allColors = [natural, cafe, titanio, blanco, madera];
 
   // Associate colors with lines (varies by line)
   // Most lines have: natural, café, titanio, blanco
@@ -89,8 +88,6 @@ async function main() {
       await db.productLineColor.create({ data: { productLineId: l.id, colorId: madera.id } });
     }
 
-    // All lines can have personalizado
-    await db.productLineColor.create({ data: { productLineId: l.id, colorId: personalizado.id } });
   }
 
   // ═══════════════════════════════════════════

@@ -1,17 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Calculator, FileText, FolderOpen, Users, Settings, HelpCircle, Menu, X } from 'lucide-react';
+import { Calculator, Menu, X } from 'lucide-react';
 
 export default function AppHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     { label: 'Cotizar', icon: Calculator, active: true },
-    { label: 'Cotizaciones', icon: FileText, active: false },
-    { label: 'Proyectos', icon: FolderOpen, active: false },
-    { label: 'Clientes', icon: Users, active: false },
-    { label: 'Configuración', icon: Settings, active: false },
   ];
 
   return (
@@ -45,13 +41,8 @@ export default function AppHeader() {
             ))}
           </nav>
 
-          {/* Right side: Help + Mobile menu */}
+          {/* Right side: Mobile menu */}
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[#0D5C63] border border-[#0D5C63]/30 hover:bg-[#0D5C63]/5 transition-colors">
-              <HelpCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Ayuda</span>
-            </button>
-
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
