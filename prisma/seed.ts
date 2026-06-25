@@ -110,6 +110,7 @@ async function main() {
   const gInc4 = await db.glassOption.create({ data: { name: 'Incoloro 4mm', code: 'inc-4mm', description: 'Vidrio incoloro 4mm', sortOrder: 16 } });
   const gInc5 = await db.glassOption.create({ data: { name: 'Incoloro 5mm', code: 'inc-5mm', description: 'Vidrio incoloro 5mm', sortOrder: 17 } });
   const gInc6 = await db.glassOption.create({ data: { name: 'Incoloro 6mm', code: 'inc-6mm', description: 'Vidrio incoloro 6mm', sortOrder: 18 } });
+  const gNoHay = await db.glassOption.create({ data: { name: 'Sin Vidrio', code: 'no-hay', description: 'Sin vidrio', sortOrder: 19 } });
 
   // ═══════════════════════════════════════════
   // GLASS PRICES PER PRODUCT LINE (per m²)
@@ -117,7 +118,7 @@ async function main() {
   // Línea 5000 glass prices
   const l5kGlass = [
     [gDoble, 15900], [gTriple, 21200], [gCatedral, 18900], [gBronc4, 23320],
-    [gCatColor, 23330], [gStopSol, 31520],
+    [gCatColor, 23330], [gStopSol, 31520], [gNoHay, 0],
   ];
   for (const [g, p] of l5kGlass) {
     await db.productLineGlass.create({ data: { productLineId: l5000.id, glassOptionId: g.id, pricePerM2: p } });
@@ -233,7 +234,7 @@ async function main() {
   // ═══════════════════════════════════════════
   // ACCESSORIES (real Crispieri accessories with prices)
   // ═══════════════════════════════════════════
-  const accBurlete = await db.accessory.create({ data: { name: 'Burlete', code: 'burlete', description: 'Burlete para sellado', price: 300, priceCafe: 300, unit: 'metro', sortOrder: 1 } });
+  const accBurlete = await db.accessory.create({ data: { name: 'Burlete', code: 'burlete', description: 'Burlete para sellado', price: 300, priceCafe: 150, unit: 'metro', sortOrder: 1 } });
   const accFelpa = await db.accessory.create({ data: { name: 'Felpa', code: 'felpa', description: 'Felpa para corredera (+10% holgura)', price: 130, priceCafe: 140, unit: 'metro', sortOrder: 2 } });
   const accRodamiento = await db.accessory.create({ data: { name: 'Rodamiento', code: 'rodamiento', description: 'Rodamiento para corredera', price: 350, priceCafe: 350, unit: 'par', sortOrder: 3 } });
   const accPestillo = await db.accessory.create({ data: { name: 'Pestillo', code: 'pestillo', description: 'Pestillo de seguridad', price: 1200, priceCafe: 1400, unit: 'unidad', sortOrder: 4 } });
@@ -469,15 +470,29 @@ async function main() {
     await db.pricingRule.create({ data: { productLineId: l.id, name: 'Redondeo a múltiplo de', ruleType: 'rounding_multiple', value: 1000, unit: 'CLP' } });
   }
 
+  // Mano de obra por línea
+  await db.pricingRule.create({ data: { productLineId: l5000.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 17000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: l7000.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 17000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: l8000.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 17000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: brazoExt.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 20000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: ventAbatir.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 20000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: cp7095.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 25000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: cp3060.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 25000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: puertaTubo.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 25000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: fijoTub.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 20000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: fijoCP.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 20000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: celosias.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 15000, unit: 'CLP' } });
+  await db.pricingRule.create({ data: { productLineId: showerDoor.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 20000, unit: 'CLP' } });
+
   console.log('✅ Seed completed successfully!');
   console.log(`  - 6 product types`);
   console.log(`  - 12 product lines with real Crispieri margins`);
   console.log(`  - 7 colors with cascade pricing`);
-  console.log(`  - 18 glass options`);
+  console.log(`  - 19 glass options`);
   console.log(`  - Glass prices per line (${12}+ line-glass combos)`);
   console.log(`  - 12 accessories with natural/café prices`);
   console.log(`  - Profile prices for all 12 lines`);
-  console.log(`  - 48 pricing rules`);
+  console.log(`  - 60 pricing rules`);
 }
 
 main()

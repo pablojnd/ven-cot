@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useQuoteStore, getCompletedSteps } from '@/stores/quoteStore';
+import { useQuoteStore } from '@/stores/quoteStore';
 import AppHeader from './AppHeader';
 import ProductTypeSelector from './ProductTypeSelector';
 import LineSelector from './LineSelector';
@@ -25,30 +25,9 @@ export default function QuoteConfigurator() {
     }
   }, []);
 
-  const completedSteps = getCompletedSteps(store);
-  const progressPct = Math.round((completedSteps.length / 8) * 100);
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <AppHeader />
-
-      {/* Progress bar */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-end mb-1.5">
-            <span className="text-xs font-medium text-emerald-600">{progressPct}%</span>
-          </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-400 mt-1.5">
-            Completa los pasos para generar tu cotización
-          </p>
-        </div>
-      </div>
 
       {/* Main content */}
       <div className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-6">
