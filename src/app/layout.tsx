@@ -18,9 +18,6 @@ export const metadata: Metadata = {
   description: "Cotiza ventanas, puertas y fijos de aluminio en línea. Sistema profesional de cotización Crispieri.",
   keywords: ["Crispieri", "cotizador", "ventanas", "puertas", "aluminio", "cotización"],
   authors: [{ name: "Crispieri" }],
-  icons: {
-    icon: "/logo.svg",
-  },
 };
 
 export default function RootLayout({

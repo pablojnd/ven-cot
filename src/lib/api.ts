@@ -344,7 +344,7 @@ export function estimatePrice(params: {
   const perimeterM = 2 * (widthM + heightM);
 
   // Determine which price to use based on color
-  const useCafePrice = colorCode !== 'natural';
+  const useCafePrice = colorCode !== 'natural' && colorCode !== 'satinado';
 
   // 1. Profiles total — use real profile prices from catalog if available
   let profilesTotal: number;
@@ -384,7 +384,7 @@ export function estimatePrice(params: {
   // 5. Subtotal
   const subtotal = profilesTotal + glassTotal + accessoriesTotal + laborTotal;
 
-  // 6. Margin calculation based on color
+  // 6. Margin calculation based on color — cascade chain: satinado → bronce (+10%) → titanio (+10%) → blanco (+10%) → madera (+10%)
   let marginMultiplier: number;
   switch (colorCode) {
     case 'natural':
@@ -393,14 +393,20 @@ export function estimatePrice(params: {
     case 'cafe':
       marginMultiplier = 1 + marginPctCafe / 100;
       break;
+    case 'satinado':
+      marginMultiplier = 1 + marginPct / 100;
+      break;
+    case 'bronce':
+      marginMultiplier = (1 + marginPct / 100) * 1.10;
+      break;
     case 'titanio':
-      marginMultiplier = (1 + marginPct / 100) * (1 + 10 / 100);
+      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10;
       break;
     case 'blanco':
-      marginMultiplier = (1 + marginPct / 100) * (1 + 10 / 100);
+      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10 * 1.10;
       break;
     case 'madera':
-      marginMultiplier = (1 + marginPct / 100) * (1 + 15 / 100);
+      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10 * 1.10 * 1.10;
       break;
     case 'ral':
       marginMultiplier = (1 + marginPct / 100) * (1 + 20 / 100);

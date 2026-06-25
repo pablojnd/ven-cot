@@ -170,7 +170,7 @@ export function getCompletedSteps(state: QuoteConfigState): number[] {
   if (state.widthMm > 0 && state.heightMm > 0) completed.push(3);
   if (state.colorId) completed.push(4);
   if (state.glassOptionId) completed.push(5);
-  completed.push(6); // accessories optional
+  if (state.productLineId) completed.push(6); // accessories auto-applied
   if (state.quantity > 0) completed.push(7);
   if (state.productTypeId && state.productLineId && state.widthMm > 0 && state.heightMm > 0 && state.colorId && state.glassOptionId) {
     completed.push(8);
@@ -242,6 +242,12 @@ export const useQuoteStore = create<QuoteStore>((set, get) => ({
     const availableGlass = getAvailableGlassOptions(catalog, id);
     if (availableGlass.length > 0) {
       set({ glassOptionId: availableGlass[0].id });
+    }
+
+    // Auto-select all available accessories (always applied)
+    const accessories = getAvailableAccessoriesForLine(catalog, id);
+    if (accessories.length > 0) {
+      set({ selectedAccessories: accessories.map((a) => ({ accessoryId: a.id, quantity: 1 })) });
     }
 
     setTimeout(() => get().recalculatePrice(), 0);

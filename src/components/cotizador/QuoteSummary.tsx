@@ -52,7 +52,7 @@ export default function QuoteSummary() {
           <CharacteristicRow
             icon={<Ruler className="w-3.5 h-3.5" />}
             label="Dimensiones"
-            value={store.widthMm > 0 ? `${store.heightMm} mm × ${store.widthMm} mm` : '—'}
+            value={store.widthMm > 0 ? `${Math.round(store.heightMm / 10)} cm × ${Math.round(store.widthMm / 10)} cm` : '—'}
           />
           <CharacteristicRow
             icon={<Ruler className="w-3.5 h-3.5" />}
@@ -173,23 +173,8 @@ function PriceBreakdown() {
     <div className="space-y-2">
       <h4 className="text-sm font-semibold text-gray-700">Resumen de precio</h4>
       <div className="bg-gray-50 rounded-xl p-4 space-y-2 border border-gray-100">
-        {/* Per-unit breakdown */}
-        <PriceRow label={`Perfiles${qty > 1 ? ' (c/u)' : ''}`} value={fmt(estimate.profilesTotal)} />
-        <PriceRow label="Vidrio" value={fmt(estimate.glassTotal)} muted />
-        {estimate.accessoriesTotal > 0 && (
-          <PriceRow label="Accesorios" value={fmt(estimate.accessoriesTotal)} muted />
-        )}
-        <PriceRow label="Mano de obra" value={fmt(estimate.laborTotal)} muted />
-        <div className="border-t border-gray-200 my-1" />
-        <PriceRow label="Subtotal" value={fmt(estimate.subtotal)} />
-        <PriceRow label="Margen" value={`+${fmt(estimate.marginAmount)}`} muted />
-        <PriceRow label={`Pre-total (redond.)`} value={fmt(estimate.preTotal)} />
-        {qty > 1 && (
-          <PriceRow label={`Cantidad`} value={`× ${qty}`} />
-        )}
-        <div className="border-t border-gray-200 my-1" />
         <PriceRow label="Subtotal neto" value={fmt(estimate.total)} />
-        <PriceRow label="IVA (19%)" value={fmt(estimate.tax)} />
+        <PriceRow label="IVA (19%)" value={fmt(estimate.tax)} muted />
         <div className="border-t border-gray-200 my-1" />
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold text-gray-800">Total estimado</span>

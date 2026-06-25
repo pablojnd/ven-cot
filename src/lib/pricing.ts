@@ -255,7 +255,7 @@ export function calculatePrice(input: PriceCalculationInput): PriceBreakdown {
 
   // Determine which price column to use based on color
   const isCafeColor = colorCode === 'cafe';
-  const useCafePrice = colorCode !== 'natural'; // All non-natural colors use café price for profiles
+  const useCafePrice = colorCode !== 'natural' && colorCode !== 'satinado'; // natural and satinado use base price
 
   // 2. Profiles total
   const profileUsage = getProfileUsage(widthMm, heightMm, panelCount, productTypeCode, productLineCode, profilePrices);
@@ -306,21 +306,29 @@ export function calculatePrice(input: PriceCalculationInput): PriceBreakdown {
       marginMultiplier = 1 + marginPctCafe / 100;
       marginAmount = subtotal * (marginPctCafe / 100);
       break;
+    case 'satinado':
+      marginMultiplier = 1 + marginPct / 100;
+      marginAmount = subtotal * (marginPct / 100);
+      break;
+    case 'bronce':
+      marginMultiplier = (1 + marginPct / 100) * 1.10;
+      marginAmount = subtotal * marginMultiplier - subtotal;
+      break;
     case 'titanio':
-      marginAmount = subtotal * (marginPct / 100) + subtotal * (1 + marginPct / 100) * (10 / 100);
-      marginMultiplier = (1 + marginPct / 100) * (1 + 10 / 100);
+      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10;
+      marginAmount = subtotal * marginMultiplier - subtotal;
       break;
     case 'blanco':
-      marginAmount = subtotal * (marginPct / 100) + subtotal * (1 + marginPct / 100) * (10 / 100);
-      marginMultiplier = (1 + marginPct / 100) * (1 + 10 / 100);
+      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10 * 1.10;
+      marginAmount = subtotal * marginMultiplier - subtotal;
       break;
     case 'madera':
-      marginAmount = subtotal * (marginPct / 100) + subtotal * (1 + marginPct / 100) * (15 / 100);
-      marginMultiplier = (1 + marginPct / 100) * (1 + 15 / 100);
+      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10 * 1.10 * 1.10;
+      marginAmount = subtotal * marginMultiplier - subtotal;
       break;
     case 'ral':
-      marginAmount = subtotal * (marginPct / 100) + subtotal * (1 + marginPct / 100) * (20 / 100);
       marginMultiplier = (1 + marginPct / 100) * (1 + 20 / 100);
+      marginAmount = subtotal * (marginPct / 100) + subtotal * (1 + marginPct / 100) * (20 / 100);
       break;
     default:
       marginMultiplier = 1 + marginPct / 100;

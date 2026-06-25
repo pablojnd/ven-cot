@@ -8,7 +8,6 @@ import LineSelector from './LineSelector';
 import DimensionInputs from './DimensionInputs';
 import ColorSelector from './ColorSelector';
 import GlassSelector from './GlassSelector';
-import AccessoriesSelector from './AccessoriesSelector';
 import QuantityNotes from './QuantityNotes';
 import ReviewStep from './ReviewStep';
 import QuoteSummary from './QuoteSummary';
@@ -36,10 +35,7 @@ export default function QuoteConfigurator() {
       {/* Progress bar */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-gray-500">
-              Paso {completedSteps.length} de 8
-            </span>
+          <div className="flex items-center justify-end mb-1.5">
             <span className="text-xs font-medium text-emerald-600">{progressPct}%</span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -81,7 +77,6 @@ export default function QuoteConfigurator() {
               <DimensionInputs />
               <ColorSelector />
               <GlassSelector />
-              <AccessoriesSelector />
               <QuantityNotes />
               <ReviewStep />
             </div>

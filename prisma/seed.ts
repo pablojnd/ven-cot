@@ -59,31 +59,30 @@ async function main() {
   // COLORS (real Crispieri colors with surcharges)
   // ═══════════════════════════════════════════
   const natural = await db.color.create({ data: { name: 'Natural', code: 'natural', hexValue: '#C0C0C0', surchargePct: 0, sortOrder: 1 } });
-  const cafe = await db.color.create({ data: { name: 'Café', code: 'cafe', hexValue: '#5C3317', surchargePct: 0, sortOrder: 2 } }); // Base price column D
-  const titanio = await db.color.create({ data: { name: 'Titanio', code: 'titanio', hexValue: '#4A4A4A', surchargePct: 10, sortOrder: 3 } });
-  const blanco = await db.color.create({ data: { name: 'Blanco', code: 'blanco', hexValue: '#FFFFFF', surchargePct: 10, sortOrder: 4 } });
-  const madera = await db.color.create({ data: { name: 'Madera', code: 'madera', hexValue: '#8B6914', surchargePct: 15, sortOrder: 5 } });
+  const cafe = await db.color.create({ data: { name: 'Café', code: 'cafe', hexValue: '#5C3317', surchargePct: 0, sortOrder: 2 } });
+  const satinado = await db.color.create({ data: { name: 'Satinado', code: 'satinado', hexValue: '#D4D4D4', surchargePct: 0, sortOrder: 3 } });
+  const bronce = await db.color.create({ data: { name: 'Bronce', code: 'bronce', hexValue: '#CD7F32', surchargePct: 0, sortOrder: 4 } });
+  const titanio = await db.color.create({ data: { name: 'Titanio', code: 'titanio', hexValue: '#4A4A4A', surchargePct: 0, sortOrder: 5 } });
+  const blanco = await db.color.create({ data: { name: 'Blanco', code: 'blanco', hexValue: '#FFFFFF', surchargePct: 0, sortOrder: 6 } });
+  const madera = await db.color.create({ data: { name: 'Madera', code: 'madera', hexValue: '#8B6914', surchargePct: 0, sortOrder: 7 } });
 
-  const allColors = [natural, cafe, titanio, blanco, madera];
+  const allColors = [natural, cafe, satinado, bronce, titanio, blanco, madera];
 
   // Associate colors with lines (varies by line)
-  // Most lines have: natural, café, titanio, blanco
+  // Most lines have: natural, café, satinado, bronce, titanio, blanco
   // Some also have: madera
-  // Línea 7000 and Celosías: only natural, café, titanio
+  // Línea 7000 and Celosías: only natural, café, satinado, bronce, titanio
   for (const l of allLines) {
-    // All lines have natural and café
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: natural.id } });
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: cafe.id } });
-    
-    // Most lines have titanio (not Línea 7000 and Celosías in some cases, but we include for simplicity)
+    await db.productLineColor.create({ data: { productLineId: l.id, colorId: satinado.id } });
+    await db.productLineColor.create({ data: { productLineId: l.id, colorId: bronce.id } });
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: titanio.id } });
 
-    // Most lines have blanco (not Línea 7000, Celosías)
     if (![l7000.id, celosias.id].includes(l.id)) {
       await db.productLineColor.create({ data: { productLineId: l.id, colorId: blanco.id } });
     }
 
-    // Some lines have madera
     if ([l5000.id, l8000.id, cp7095.id, puertaTubo.id, fijoTub.id, fijoCP.id].includes(l.id)) {
       await db.productLineColor.create({ data: { productLineId: l.id, colorId: madera.id } });
     }
@@ -473,7 +472,7 @@ async function main() {
   console.log('✅ Seed completed successfully!');
   console.log(`  - 6 product types`);
   console.log(`  - 12 product lines with real Crispieri margins`);
-  console.log(`  - 6 colors with real surcharges`);
+  console.log(`  - 7 colors with cascade pricing`);
   console.log(`  - 18 glass options`);
   console.log(`  - Glass prices per line (${12}+ line-glass combos)`);
   console.log(`  - 12 accessories with natural/café prices`);

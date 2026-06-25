@@ -35,11 +35,11 @@ export default function DimensionInputs() {
             <div className="relative flex-1">
               <input
                 type="number"
-                value={store.heightMm}
-                onChange={(e) => store.setHeight(Number(e.target.value))}
-                min={400}
-                max={3000}
-                step={50}
+                value={Math.round(store.heightMm / 10)}
+                onChange={(e) => store.setHeight(Number(e.target.value) * 10)}
+                min={40}
+                max={300}
+                step={5}
                 className="w-full h-10 text-center text-sm font-semibold border-y border-gray-300 focus:outline-none focus:border-[#0D5C63] focus:ring-1 focus:ring-[#0D5C63] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
@@ -50,7 +50,7 @@ export default function DimensionInputs() {
               <Plus className="w-4 h-4" />
             </button>
           </div>
-          <span className="text-xs text-gray-400">400 – 3.000 mm</span>
+          <span className="text-xs text-gray-400">40 – 300 cm</span>
         </div>
 
         {/* Width */}
@@ -66,11 +66,11 @@ export default function DimensionInputs() {
             <div className="relative flex-1">
               <input
                 type="number"
-                value={store.widthMm}
-                onChange={(e) => store.setWidth(Number(e.target.value))}
-                min={400}
-                max={4000}
-                step={50}
+                value={Math.round(store.widthMm / 10)}
+                onChange={(e) => store.setWidth(Number(e.target.value) * 10)}
+                min={40}
+                max={400}
+                step={5}
                 className="w-full h-10 text-center text-sm font-semibold border-y border-gray-300 focus:outline-none focus:border-[#0D5C63] focus:ring-1 focus:ring-[#0D5C63] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
@@ -81,7 +81,7 @@ export default function DimensionInputs() {
               <Plus className="w-4 h-4" />
             </button>
           </div>
-          <span className="text-xs text-gray-400">400 – 4.000 mm</span>
+          <span className="text-xs text-gray-400">40 – 400 cm</span>
         </div>
 
         {/* Panel count */}

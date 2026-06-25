@@ -10,10 +10,7 @@ export default function ReviewStep() {
   const color = getCurrentColor(store);
   const glass = getCurrentGlassOption(store);
   const availableAccessories = getAvailableAccessoriesForState(store);
-  const selectedAccessoryIds = store.selectedAccessories.map((a) => a.accessoryId);
-  const selectedAccessoryNames = availableAccessories
-    .filter((a) => selectedAccessoryIds.includes(a.id))
-    .map((a) => a.name);
+  const selectedAccessoryNames = availableAccessories.map((a) => a.name);
   const completedSteps = getCompletedSteps(store);
   const allComplete = completedSteps.includes(8);
   const estimate = store.priceEstimate;
@@ -23,10 +20,10 @@ export default function ReviewStep() {
   const steps = [
     { num: 1, label: 'Tipo de producto', value: productType?.name, required: true },
     { num: 2, label: 'Línea / Serie', value: productLine?.name, required: true },
-    { num: 3, label: 'Dimensiones', value: `${store.heightMm} mm × ${store.widthMm} mm`, required: true },
+    { num: 3, label: 'Dimensiones', value: `${Math.round(store.heightMm / 10)} cm × ${Math.round(store.widthMm / 10)} cm`, required: true },
     { num: 4, label: 'Color del perfil', value: color?.name, required: true },
     { num: 5, label: 'Vidrio', value: glass?.name, required: true },
-    { num: 6, label: 'Accesorios', value: selectedAccessoryNames.length > 0 ? selectedAccessoryNames.join(', ') : 'Ninguno', required: false },
+    { num: 6, label: 'Accesorios', value: selectedAccessoryNames.length > 0 ? selectedAccessoryNames.join(', ') : 'Sin accesorios disponibles', required: true },
     { num: 7, label: 'Cantidad', value: `${store.quantity} unidades`, required: true },
   ];
 

@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
             where: { id: acc.accessoryId },
           });
           if (accessory) {
-            const useCafePrice = colorCode !== 'natural';
+            const useCafePrice = colorCode !== 'natural' && colorCode !== 'satinado';
             const unitPrice = useCafePrice ? accessory.priceCafe : accessory.price;
             await tx.quoteItemAccessory.create({
               data: {

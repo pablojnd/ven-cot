@@ -332,7 +332,7 @@ export default function WindowPreview() {
         <line x1={frameX} y1={frameY + frameH + 10} x2={frameX} y2={frameY + frameH + 18} stroke="#9CA3AF" strokeWidth={1} />
         <line x1={frameX + frameW} y1={frameY + frameH + 10} x2={frameX + frameW} y2={frameY + frameH + 18} stroke="#9CA3AF" strokeWidth={1} />
         <text x={frameX + frameW / 2} y={frameY + frameH + 24} textAnchor="middle" className="text-[10px]" fill="#6B7280" fontWeight="500">
-          {store.widthMm} mm
+          {Math.round(store.widthMm / 10)} cm
         </text>
       </g>
       {/* Height label */}
@@ -341,7 +341,7 @@ export default function WindowPreview() {
         <line x1={frameX - 18} y1={frameY} x2={frameX - 10} y2={frameY} stroke="#9CA3AF" strokeWidth={1} />
         <line x1={frameX - 18} y1={frameY + frameH} x2={frameX - 10} y2={frameY + frameH} stroke="#9CA3AF" strokeWidth={1} />
         <text x={frameX - 16} y={frameY + frameH / 2} textAnchor="middle" transform={`rotate(-90, ${frameX - 16}, ${frameY + frameH / 2})`} className="text-[10px]" fill="#6B7280" fontWeight="500">
-          {store.heightMm} mm
+          {Math.round(store.heightMm / 10)} cm
         </text>
       </g>
     </svg>
