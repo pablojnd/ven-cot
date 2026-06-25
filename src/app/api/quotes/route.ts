@@ -155,6 +155,10 @@ export async function POST(request: NextRequest) {
         const laborRule = pricingRules.find(r => r.ruleType === 'labor_cost');
         const laborCost = laborRule?.value ?? 20000;
 
+        // Get minimum billable area
+        const minimumAreaRule = pricingRules.find(r => r.ruleType === 'minimum_area');
+        const minimumAreaM2 = minimumAreaRule?.value ?? 0.5;
+
         // Fetch accessories with their prices
         const accessoryPrices: { name: string; code: string; price: number; priceCafe: number; unit: string; quantity: number }[] = [];
         for (const acc of item.accessories) {
@@ -196,6 +200,7 @@ export async function POST(request: NextRequest) {
           accessoryPrices,
           laborCost,
           roundingMultiple,
+          minimumAreaM2,
         });
 
         // Create quote item with new schema fields
@@ -265,6 +270,7 @@ export async function POST(request: NextRequest) {
           accessoryPrices,
           laborCost,
           roundingMultiple,
+          minimumAreaM2,
         });
 
         for (const record of breakdownRecords) {

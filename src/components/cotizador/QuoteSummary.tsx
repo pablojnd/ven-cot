@@ -91,7 +91,7 @@ export default function QuoteSummary() {
             const result = await store.submitQuote();
             if (result) {
               toast.success(`Cotización ${result.quoteNumber} generada`, {
-                description: `Total: $${Math.round(result.totalAmount + result.totalTax).toLocaleString('es-CL')} CLP (con IVA)`,
+                description: `Total neto: $${Math.round(result.totalAmount).toLocaleString('es-CL')} CLP`,
               });
             }
           }}
@@ -142,7 +142,7 @@ export default function QuoteSummary() {
               Cotización {store.lastQuote.quoteNumber} generada
             </p>
             <p className="text-xs text-emerald-600 mt-1">
-              {`Total: $${Math.round(store.lastQuote.totalAmount + store.lastQuote.totalTax).toLocaleString('es-CL')} CLP (con IVA)`}
+              {`Total neto: $${Math.round(store.lastQuote.totalAmount).toLocaleString('es-CL')} CLP`}
             </p>
           </div>
         )}
@@ -173,16 +173,16 @@ function PriceBreakdown() {
     <div className="space-y-2">
       <h4 className="text-sm font-semibold text-gray-700">Resumen de precio</h4>
       <div className="bg-gray-50 rounded-xl p-4 space-y-2 border border-gray-100">
-        <PriceRow label="Subtotal neto" value={fmt(estimate.total)} />
-        <PriceRow label="IVA (19%)" value={fmt(estimate.tax)} muted />
+        <PriceRow label="Subtotal con margen" value={fmt(estimate.total)} />
+        <PriceRow label="IVA referencial (19%)" value={fmt(estimate.tax)} muted />
         <div className="border-t border-gray-200 my-1" />
         <div className="flex items-center justify-between">
-          <span className="text-sm font-bold text-gray-800">Total estimado</span>
-          <span className="text-lg font-bold text-emerald-600">{fmt(estimate.total + estimate.tax)}</span>
+          <span className="text-sm font-bold text-gray-800">Total neto estimado</span>
+          <span className="text-lg font-bold text-emerald-600">{fmt(estimate.total)}</span>
         </div>
         {qty > 1 && (
           <div className="text-xs text-gray-400 text-right">
-            {fmt(estimate.unitTotal + estimate.unitTotal * 0.19)} c/u (con IVA)
+            {fmt(estimate.unitTotal)} c/u neto
           </div>
         )}
       </div>

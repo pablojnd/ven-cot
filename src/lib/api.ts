@@ -1,3 +1,5 @@
+import { calculatePrice, type PriceBreakdown } from './pricing';
+
 const API_BASE = '/api';
 
 // ============================================
@@ -280,25 +282,10 @@ export async function deleteQuote(id: string): Promise<void> {
 // CLIENT-SIDE PRICE ESTIMATION (Simplified Crispieri Formula)
 // ============================================
 
-export interface ClientPriceEstimate {
-  areaM2: number;
-  perimeterM: number;
-  profilesTotal: number;
-  glassTotal: number;
-  accessoriesTotal: number;
-  laborTotal: number;
-  subtotal: number;
-  marginAmount: number;
-  preTotal: number;
-  tax: number;
-  total: number;
-  unitTotal: number;
-}
+export type ClientPriceEstimate = PriceBreakdown;
 
 /**
- * Simplified client-side price estimation that mirrors the server-side Crispieri formula.
- * Uses an average profile cost approximation since the full profile calculation
- * is complex and done server-side.
+ * Client-side price estimation using the same Crispieri formula as quote creation.
  */
 export function estimatePrice(params: {
   widthMm: number;
@@ -311,326 +298,36 @@ export function estimatePrice(params: {
   marginPctCafe: number;
   colorCode: string;
   glassPricePerM2: number;
-  accessoryPrices: { price: number; priceCafe: number; code: string; quantity: number }[];
+  accessoryPrices: { name?: string; price: number; priceCafe: number; code: string; unit?: string; quantity: number }[];
   profilePrices?: ProfilePrice[];
   laborCost?: number;
   roundingMultiple?: number;
+  minimumAreaM2?: number;
 }): ClientPriceEstimate {
-  const {
-    widthMm,
-    heightMm,
-    panelCount,
-    quantity,
-    productLineCode,
-    productTypeCode,
-    marginPct,
-    marginPctCafe,
-    colorCode,
-    glassPricePerM2,
-    accessoryPrices,
-    profilePrices,
-    laborCost = 20000,
-    roundingMultiple = 1000,
-  } = params;
-
-  const widthM = widthMm / 1000;
-  const heightM = heightMm / 1000;
-
-  // Area calculation (minimum 0.5 m²)
-  let areaM2 = (widthMm * heightMm) / 1_000_000;
-  if (areaM2 < 0.5) areaM2 = 0.5;
-
-  // Perimeter
-  const perimeterM = 2 * (widthM + heightM);
-
-  // Determine which price to use based on color
-  const useCafePrice = colorCode !== 'natural' && colorCode !== 'satinado';
-
-  // 1. Profiles total — use real profile prices from catalog if available
-  let profilesTotal: number;
-  if (profilePrices && profilePrices.length > 0) {
-    profilesTotal = calculateProfilesFromPrices(
-      profilePrices, widthM, heightM, panelCount, productTypeCode, useCafePrice
-    );
-  } else {
-    // Fallback to simplified approximation
-    const avgProfilePerM = getAvgProfileCostPerMeter(productLineCode, useCafePrice);
-    const profileFactor = getProfileFactor(productTypeCode, panelCount);
-    profilesTotal = perimeterM * avgProfilePerM * profileFactor;
-  }
-
-  // 2. Glass total
-  const glassTotal = areaM2 * glassPricePerM2;
-
-  // 3. Accessories total
-  let accessoriesTotal = 0;
-  for (const acc of accessoryPrices) {
-    let unitPrice = useCafePrice ? acc.priceCafe : acc.price;
-    let qty = acc.quantity;
-
-    // Special handling for burlete and felpa (perimeter-based)
-    if (acc.code === 'burlete') {
-      qty = Math.ceil(perimeterM * panelCount);
-    } else if (acc.code === 'felpa') {
-      qty = Math.ceil(perimeterM * 1.10 * panelCount);
-    }
-
-    accessoriesTotal += qty * unitPrice;
-  }
-
-  // 4. Labor
-  const laborTotal = laborCost;
-
-  // 5. Subtotal
-  const subtotal = profilesTotal + glassTotal + accessoriesTotal + laborTotal;
-
-  // 6. Margin calculation — chain: natural/satinado (base), cafe (marginPctCafe),
-  //    bronce (+10% over cafe), titanio (+10%), blanco (+10%), madera (+15%)
-  let marginMultiplier: number;
-  let preTotal: number;
-
-  switch (colorCode) {
-    case 'natural':
-    case 'satinado':
-      marginMultiplier = 1 + marginPct / 100;
-      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
-      break;
-    case 'cafe':
-      marginMultiplier = 1 + marginPctCafe / 100;
-      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
-      break;
-    case 'ral':
-      marginMultiplier = (1 + marginPct / 100) * (1 + 20 / 100);
-      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
-      break;
-    default: {
-      const incMap: Record<string, number[]> = {
-        bronce: [10],
-        titanio: [10, 10],
-        blanco: [10, 10, 10],
-        madera: [10, 10, 10, 15],
-      };
-      const increments = incMap[colorCode];
-      if (increments) {
-        let chainTotal = subtotal * (1 + marginPctCafe / 100);
-        chainTotal = Math.ceil(chainTotal / roundingMultiple) * roundingMultiple;
-        for (const inc of increments) {
-          chainTotal = chainTotal * (1 + inc / 100);
-          chainTotal = Math.ceil(chainTotal / roundingMultiple) * roundingMultiple;
-        }
-        marginMultiplier = subtotal > 0 ? chainTotal / subtotal : 1;
-        preTotal = chainTotal;
-      } else {
-        marginMultiplier = 1 + marginPct / 100;
-        preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
-      }
-      break;
-    }
-  }
-
-  const marginAmount = preTotal - subtotal;
-  // marginMultiplier already set above
-
-  // 8. Total for quantity
-  const total = preTotal * quantity;
-
-  // 9. IVA
-  const tax = total * 0.19;
-
-  // Unit total
-  const unitTotal = quantity > 0 ? total / quantity : 0;
-
-  return {
-    areaM2: Math.round(areaM2 * 10000) / 10000,
-    perimeterM: Math.round(perimeterM * 100) / 100,
-    profilesTotal: Math.round(profilesTotal),
-    glassTotal: Math.round(glassTotal),
-    accessoriesTotal: Math.round(accessoriesTotal),
-    laborTotal: Math.round(laborTotal),
-    subtotal: Math.round(subtotal),
-    marginAmount: Math.round(marginAmount),
-    preTotal: Math.round(preTotal),
-    tax: Math.round(tax),
-    total: Math.round(total),
-    unitTotal: Math.round(unitTotal),
-  };
-}
-
-/**
- * Calculate profile costs using real profile prices from the catalog.
- * Matches the server-side calculation in pricing.ts.
- */
-function calculateProfilesFromPrices(
-  profilePrices: ProfilePrice[],
-  widthM: number,
-  heightM: number,
-  panelCount: number,
-  productTypeCode: string,
-  useCafePrice: boolean
-): number {
-  let total = 0;
-
-  for (const profile of profilePrices) {
-    const pricePerM = (useCafePrice ? profile.priceCafe : profile.priceNatural) / profile.stripLengthM;
-    const name = profile.profileName.toLowerCase();
-
-    // Determine how many meters of this profile are needed
-    // This matches the server-side logic in pricing.ts
-    let meters = 0;
-
-    if (productTypeCode === 'corredera') {
-      // Sliding window
-      if (name.includes('riel inferior') || name.includes('riel superior')) {
-        meters = widthM * panelCount;
-      } else if (name.includes('jamba') && !name.includes('esquinera')) {
-        meters = heightM * 2;
-      } else if (name.includes('cabecera inferior') || name.includes('cabecera superior')) {
-        meters = widthM;
-      } else if (name.includes('traslapo')) {
-        meters = heightM * Math.max(0, panelCount - 1);
-      } else if (name.includes('pierna')) {
-        meters = heightM * panelCount;
-      } else if (name.includes('palillo')) {
-        meters = heightM * panelCount;
-      } else if (name.includes('4ª hoja') || name.includes('4a hoja') || name.includes('perfil 4a')) {
-        if (panelCount >= 4) meters = widthM * (panelCount - 3);
-      } else if (name.includes('placa aluminio') || name.includes('placa ')) {
-        if (panelCount >= 3) meters = heightM * (panelCount - 2);
-      } else if (name.includes('tubo rectangular')) {
-        meters = (widthM + heightM) * 0.5;
-      } else if (name.includes('tubo') && !name.includes('rectangular')) {
-        meters = heightM;
-      } else {
-        meters = (widthM + heightM) * 0.3;
-      }
-    } else if (productTypeCode === 'celosia') {
-      // Louvers
-      if (name.includes('marco')) {
-        meters = 2 * (widthM + heightM);
-      } else if (name.includes('junquillo')) {
-        meters = 2 * (widthM + heightM);
-      } else if (name.includes('pilar')) {
-        meters = heightM * panelCount;
-      } else if (name.includes('tubo')) {
-        meters = widthM * panelCount * 0.3;
-      } else {
-        meters = (widthM + heightM) * 0.3;
-      }
-    } else if (productTypeCode === 'abatible') {
-      // Hinged / projecting windows
-      if (name.includes('marco')) {
-        meters = 2 * (widthM + heightM);
-      } else if (name.includes('centro p') || name.includes('cpuerta') || name.includes('hoja')) {
-        meters = 2 * (widthM + heightM) * panelCount * 0.5;
-      } else if (name.includes('junquillo')) {
-        meters = 2 * (widthM + heightM) * panelCount * 0.5;
-      } else if (name.includes('tubo')) {
-        meters = (widthM + heightM) * 0.3;
-      } else if (name.includes('amarre') || name.includes('angulo') || name.includes('canal')) {
-        meters = (widthM + heightM) * 0.3;
-      } else {
-        meters = (widthM + heightM) * 0.2;
-      }
-    } else if (productTypeCode === 'puerta') {
-      // Doors
-      if (name.includes('tubo 40x40') || name.includes('centro p')) {
-        meters = 2 * heightM;
-      } else if (name.includes('tubo 40x100') || name.includes('tubo 40x80')) {
-        meters = 2 * heightM;
-      } else if (name.includes('tubo 30x60') || name.includes('tubo') && name.includes('30x60')) {
-        meters = widthM;
-      } else if (name.includes('junquillo')) {
-        meters = 2 * (widthM + heightM) * 0.5;
-      } else if (name.includes('placa')) {
-        meters = widthM * heightM;
-      } else if (name.includes('amarre') || name.includes('angulo') || name.includes('l 25')) {
-        meters = heightM * 2;
-      } else {
-        meters = (widthM + heightM) * 0.3;
-      }
-    } else if (productTypeCode === 'fijo') {
-      // Fixed panels
-      if (name.includes('tubo') || name.includes('centro p')) {
-        meters = 2 * (widthM + heightM);
-      } else if (name.includes('junquillo')) {
-        meters = 2 * (widthM + heightM);
-      } else if (name.includes('placa')) {
-        meters = widthM * 0.5;
-      } else {
-        meters = (widthM + heightM) * 0.3;
-      }
-    } else if (productTypeCode === 'shower-door') {
-      // Shower doors
-      if (name.includes('riel inferior') || name.includes('riel superior')) {
-        meters = widthM * panelCount;
-      } else if (name.includes('jamba') && !name.includes('esquinera')) {
-        meters = heightM * 2;
-      } else if (name.includes('bastidor')) {
-        meters = heightM * panelCount;
-      } else if (name.includes('jamba esquinera')) {
-        meters = widthM * 2;
-      } else {
-        meters = (widthM + heightM) * 0.3;
-      }
-    } else {
-      meters = (widthM + heightM) * 0.3;
-    }
-
-    total += meters * pricePerM;
-  }
-
-  return total;
-}
-
-/**
- * Get average profile cost per meter for a given product line.
- * These are rough approximations based on the real Crispieri profile prices.
- */
-function getAvgProfileCostPerMeter(lineCode: string, useCafePrice: boolean): number {
-  // Average price per meter = average price per strip / 6m
-  const costs: Record<string, [number, number]> = {
-    'linea-5000': [9800, 11500],
-    'brazo-ext': [12000, 15000],
-    'vent-abatir': [7000, 8300],
-    'cp-7095': [15600, 16600],
-    'cp-3060': [14800, 17400],
-    'puerta-tubo': [28000, 31000],
-    'fijo-tubular': [15000, 21000],
-    'fijo-cp': [12000, 13600],
-    'celosias': [12700, 14900],
-    'shower-am12': [19700, 21300],
-  };
-  const [natural, cafe] = costs[lineCode] || [10000, 12000];
-  return (useCafePrice ? cafe : natural) / 6;
-}
-
-/**
- * Get profile usage factor based on product type and panel count.
- * This accounts for how many profiles are needed relative to the perimeter.
- */
-function getProfileFactor(productTypeCode: string, panelCount: number): number {
-  switch (productTypeCode) {
-    case 'corredera':
-      // Frame + panel profiles, more panels = more profiles
-      return 2.5 + (panelCount - 1) * 0.8;
-    case 'abatible':
-      // Frame + leaf profiles
-      return 2 + panelCount * 0.6;
-    case 'puerta':
-      // Frame + door profiles
-      return 2.5;
-    case 'fijo':
-      // Just frame + glass bead
-      return 2;
-    case 'celosia':
-      // Frame + louver profiles (many verticals)
-      return 3;
-    case 'shower-door':
-      // Frame + door
-      return 2.5;
-    default:
-      return 2;
-  }
+  return calculatePrice({
+    widthMm: params.widthMm,
+    heightMm: params.heightMm,
+    panelCount: params.panelCount,
+    quantity: params.quantity,
+    productLineCode: params.productLineCode,
+    productTypeCode: params.productTypeCode,
+    marginPct: params.marginPct,
+    marginPctCafe: params.marginPctCafe,
+    colorCode: params.colorCode,
+    glassPricePerM2: params.glassPricePerM2,
+    profilePrices: params.profilePrices ?? [],
+    accessoryPrices: params.accessoryPrices.map((acc) => ({
+      name: acc.name ?? acc.code,
+      code: acc.code,
+      price: acc.price,
+      priceCafe: acc.priceCafe,
+      unit: acc.unit ?? 'unidad',
+      quantity: acc.quantity,
+    })),
+    laborCost: params.laborCost ?? 20000,
+    roundingMultiple: params.roundingMultiple ?? 1000,
+    minimumAreaM2: params.minimumAreaM2,
+  });
 }
 
 // ============================================
@@ -708,4 +405,14 @@ export function getLaborCost(catalog: CatalogData, productLineId: string): numbe
     r => r.productLineId === productLineId && r.ruleType === 'labor_cost'
   );
   return rule?.value ?? 20000;
+}
+
+/**
+ * Get the minimum billable area for a given product line.
+ */
+export function getMinimumArea(catalog: CatalogData, productLineId: string): number {
+  const rule = catalog.pricingRules.find(
+    r => r.productLineId === productLineId && r.ruleType === 'minimum_area'
+  );
+  return rule?.value ?? 0.5;
 }

@@ -34,6 +34,7 @@ export interface PriceCalculationInput {
   accessoryPrices: AccessoryPriceInput[];
   laborCost: number;
   roundingMultiple: number;
+  minimumAreaM2?: number;
 }
 
 export interface PriceBreakdown {
@@ -72,13 +73,31 @@ function getProfileUsage(
   const heightM = heightMm / 1000;
   const usage: { profile: ProfilePriceInput; metersUsed: number }[] = [];
 
+  const isLinea5000Corredera = productTypeCode === 'corredera' && productLineCode === 'linea-5000';
+
   for (const profile of profilePrices) {
     let metersUsed = 0;
     const name = profile.profileName.toLowerCase();
     const code = profile.profileCode.toLowerCase();
 
-    // Determine how many meters of this profile are needed based on type
-    if (productTypeCode === 'corredera') {
+    // Línea 5000 corredera follows the Crispieri Excel profile usage exactly.
+    if (isLinea5000Corredera) {
+      if (name.includes('riel inferior') || name.includes('riel superior')) {
+        metersUsed = widthM;
+      } else if (name.includes('jamba') && !name.includes('esquinera')) {
+        metersUsed = heightM * 2;
+      } else if (name.includes('cabecera inferior') || name.includes('cabecera superior')) {
+        metersUsed = widthM;
+      } else if (name.includes('traslapo')) {
+        metersUsed = heightM * Math.max(0, panelCount - 1);
+      } else if (name.includes('pierna')) {
+        metersUsed = heightM * panelCount;
+      } else if (name.includes('palillo')) {
+        metersUsed = 0;
+      } else if (name.includes('tubo rectangular 30x60') || code === '30x60') {
+        if (widthMm > 2000) metersUsed = widthM * 2;
+      }
+    } else if (productTypeCode === 'corredera') {
       // Sliding window: riel inf/sup (horizontal × panelCount), jamba (vertical × 2),
       // cabecera inf/sup (horizontal), traslapo (vertical × panelCount-1), pierna (vertical × panelCount)
       if (name.includes('riel inferior') || name.includes('riel superior')) {
@@ -202,6 +221,45 @@ function getProfileUsage(
   return usage;
 }
 
+function roundUp(value: number, multiple: number): number {
+  return Math.ceil(value / multiple) * multiple;
+}
+
+function usesCafePrice(colorCode: string): boolean {
+  return colorCode !== 'natural' && colorCode !== 'satinado';
+}
+
+function calculateProfilesTotal(
+  profileUsage: { profile: ProfilePriceInput; metersUsed: number }[],
+  useCafePrice: boolean
+): number {
+  return profileUsage.reduce((total, { profile, metersUsed }) => {
+    const pricePerStrip = useCafePrice ? profile.priceCafe : profile.priceNatural;
+    const pricePerMeter = pricePerStrip / profile.stripLengthM;
+    return total + metersUsed * pricePerMeter;
+  }, 0);
+}
+
+function calculateAccessoriesTotal(
+  accessoryPrices: AccessoryPriceInput[],
+  perimeterM: number,
+  panelCount: number,
+  useCafePrice: boolean
+): number {
+  return accessoryPrices.reduce((total, acc) => {
+    const unitPrice = useCafePrice ? acc.priceCafe : acc.price;
+    let qty = acc.quantity;
+
+    if (acc.code === 'burlete') {
+      qty = Math.ceil(perimeterM * panelCount);
+    } else if (acc.code === 'felpa') {
+      qty = Math.ceil(perimeterM * 1.10 * panelCount);
+    }
+
+    return total + qty * unitPrice;
+  }, 0);
+}
+
 /**
  * Calculate the full price breakdown for a quote item using the real Crispieri formula.
  *
@@ -215,12 +273,12 @@ function getProfileUsage(
  *    - Felpa: perimeter_m × 1.10 × price_per_m
  * 4. laborTotal = labor cost for the line
  * 5. subtotal = profilesTotal + glassTotal + accessoriesTotal + laborTotal
- * 6. margin: depends on color
- *    - Natural: subtotal × (1 + marginPct/100)
- *    - Café: subtotal × (1 + marginPctCafe/100)
- *    - Titanio: subtotal × (1 + marginPct/100) × (1 + 10/100)
- *    - Blanco: subtotal × (1 + marginPct/100) × (1 + 10/100)
- *    - Madera: subtotal × (1 + marginPct/100) × (1 + 15/100)
+ * 6. margin/color cascade:
+ *    - Natural/Satinado: CEIL(subtotalNatural × (1 + marginPct/100))
+ *    - Café: CEIL(subtotalCafe × (1 + marginPctCafe/100))
+ *    - Titanio: CEIL(cafeTotal × 1.10)
+ *    - Blanco: CEIL(titanioTotal × 1.10)
+ *    - Madera: CEIL(blancoTotal × 1.15)
  * 7. preTotal = CEILING(subtotal × marginMultiplier, roundingMultiple)
  * 8. total for quantity = preTotal × quantity
  * 9. IVA = total × 0.19 (shown separately, not included in main price)
@@ -241,108 +299,71 @@ export function calculatePrice(input: PriceCalculationInput): PriceBreakdown {
     accessoryPrices,
     laborCost,
     roundingMultiple,
+    minimumAreaM2 = 0.5,
   } = input;
 
   const widthM = widthMm / 1000;
   const heightM = heightMm / 1000;
 
-  // 1. Area calculation (minimum 0.5 m²)
+  // 1. Area calculation with catalog minimum area rule.
   let areaM2 = (widthMm * heightMm) / 1_000_000;
-  if (areaM2 < 0.5) areaM2 = 0.5;
+  if (areaM2 < minimumAreaM2) areaM2 = minimumAreaM2;
 
   // Perimeter in meters
   const perimeterM = 2 * (widthM + heightM);
 
-  // Determine which price column to use based on color
-  const isCafeColor = colorCode === 'cafe';
-  const useCafePrice = colorCode !== 'natural' && colorCode !== 'satinado'; // natural and satinado use base price
-
-  // 2. Profiles total
+  // 2. Profiles totals: natural/base and cafe-column prices are calculated separately
+  // because the Excel cascade starts derived colors from the rounded cafe total.
   const profileUsage = getProfileUsage(widthMm, heightMm, panelCount, productTypeCode, productLineCode, profilePrices);
-  let profilesTotal = 0;
-  for (const { profile, metersUsed } of profileUsage) {
-    const pricePerStrip = useCafePrice ? profile.priceCafe : profile.priceNatural;
-    const pricePerMeter = pricePerStrip / profile.stripLengthM;
-    profilesTotal += metersUsed * pricePerMeter;
-  }
+  const profilesNaturalTotal = calculateProfilesTotal(profileUsage, false);
+  const profilesCafeTotal = calculateProfilesTotal(profileUsage, true);
 
   // 3. Glass total
   const glassTotal = areaM2 * glassPricePerM2;
 
-  // 4. Accessories total
-  let accessoriesTotal = 0;
-  for (const acc of accessoryPrices) {
-    let unitPrice = useCafePrice ? acc.priceCafe : acc.price;
-    let qty = acc.quantity;
-
-    // Special handling for burlete and felpa (priced per linear meter)
-    if (acc.code === 'burlete') {
-      qty = Math.ceil(perimeterM * panelCount);
-      unitPrice = useCafePrice ? acc.priceCafe : acc.price;
-    } else if (acc.code === 'felpa') {
-      qty = Math.ceil(perimeterM * 1.10 * panelCount);
-      unitPrice = useCafePrice ? acc.priceCafe : acc.price;
-    }
-
-    accessoriesTotal += qty * unitPrice;
-  }
+  // 4. Accessories totals
+  const accessoriesNaturalTotal = calculateAccessoriesTotal(accessoryPrices, perimeterM, panelCount, false);
+  const accessoriesCafeTotal = calculateAccessoriesTotal(accessoryPrices, perimeterM, panelCount, true);
 
   // 5. Labor total
   const laborTotal = laborCost;
 
-  // 6. Subtotal
-  const subtotal = profilesTotal + glassTotal + accessoriesTotal + laborTotal;
+  // 6. Subtotals
+  const naturalSubtotal = profilesNaturalTotal + glassTotal + accessoriesNaturalTotal + laborTotal;
+  const cafeSubtotal = profilesCafeTotal + glassTotal + accessoriesCafeTotal + laborTotal;
+  const useCafeColumn = usesCafePrice(colorCode);
+  const profilesTotal = useCafeColumn ? profilesCafeTotal : profilesNaturalTotal;
+  const accessoriesTotal = useCafeColumn ? accessoriesCafeTotal : accessoriesNaturalTotal;
+  const subtotal = useCafeColumn ? cafeSubtotal : naturalSubtotal;
 
-  // 7. Margin calculation — chain: natural/satinado (base), cafe (marginPctCafe),
-  //    bronce (+10% over cafe), titanio (+10%), blanco (+10%), madera (+15%)
-  let marginMultiplier: number;
-  let marginAmount: number;
+  // 7. Margin and Excel color cascade from rounded totals.
+  const naturalTotal = roundUp(naturalSubtotal * (1 + marginPct / 100), roundingMultiple);
+  const cafeTotal = roundUp(cafeSubtotal * (1 + marginPctCafe / 100), roundingMultiple);
+  const titanioTotal = roundUp(cafeTotal * 1.10, roundingMultiple);
+  const blancoTotal = roundUp(titanioTotal * 1.10, roundingMultiple);
+  const maderaTotal = roundUp(blancoTotal * 1.15, roundingMultiple);
+
   let preTotal: number;
-
-  switch (colorCode) {
-    case 'natural':
-    case 'satinado':
-      marginMultiplier = 1 + marginPct / 100;
-      marginAmount = subtotal * (marginPct / 100);
-      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
-      break;
-    case 'cafe':
-      marginMultiplier = 1 + marginPctCafe / 100;
-      marginAmount = subtotal * (marginPctCafe / 100);
-      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
-      break;
-    case 'ral':
-      marginMultiplier = (1 + marginPct / 100) * (1 + 20 / 100);
-      marginAmount = subtotal * (marginPct / 100) + subtotal * (1 + marginPct / 100) * (20 / 100);
-      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
-      break;
-    default: {
-      // Chain: cafe → bronce (+10%) → titanio (+10%) → blanco (+10%) → madera (+15%)
-      const incMap: Record<string, number[]> = {
-        bronce: [10],
-        titanio: [10, 10],
-        blanco: [10, 10, 10],
-        madera: [10, 10, 10, 15],
-      };
-      const increments = incMap[colorCode];
-      if (increments) {
-        let chainTotal = subtotal * (1 + marginPctCafe / 100);
-        chainTotal = Math.ceil(chainTotal / roundingMultiple) * roundingMultiple;
-        for (const inc of increments) {
-          chainTotal = chainTotal * (1 + inc / 100);
-          chainTotal = Math.ceil(chainTotal / roundingMultiple) * roundingMultiple;
-        }
-        marginMultiplier = subtotal > 0 ? chainTotal / subtotal : 1;
-        marginAmount = chainTotal - subtotal;
-        preTotal = chainTotal;
-      } else {
-        marginMultiplier = 1 + marginPct / 100;
-        marginAmount = subtotal * (marginPct / 100);
-        preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
-      }
-      break;
-    }
+  if (colorCode === 'natural' || colorCode === 'satinado') {
+    preTotal = naturalTotal;
+  } else if (colorCode === 'cafe') {
+    preTotal = cafeTotal;
+  } else if (colorCode === 'titanio') {
+    preTotal = titanioTotal;
+  } else if (colorCode === 'blanco') {
+    preTotal = blancoTotal;
+  } else if (colorCode === 'madera') {
+    preTotal = maderaTotal;
+  } else if (colorCode === 'bronce') {
+    preTotal = roundUp(cafeTotal * 1.10, roundingMultiple);
+  } else if (colorCode === 'ral') {
+    preTotal = roundUp(naturalTotal * 1.20, roundingMultiple);
+  } else {
+    preTotal = naturalTotal;
   }
+
+  const marginMultiplier = subtotal > 0 ? preTotal / subtotal : 1;
+  const marginAmount = preTotal - subtotal;
 
   // 9. Total for quantity
   const total = preTotal * quantity;
@@ -469,8 +490,8 @@ export function generateBreakdownRecords(
   // Total
   records.push({
     concept: 'total',
-    label: `Total ${input.quantity > 1 ? `(${input.quantity} unidades)` : ''}`,
-    amount: breakdown.total + breakdown.tax,
+    label: `Total neto ${input.quantity > 1 ? `(${input.quantity} unidades)` : ''}`,
+    amount: breakdown.total,
     percentage: null,
     sortOrder: 10,
   });

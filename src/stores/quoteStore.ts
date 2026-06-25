@@ -9,6 +9,7 @@ import {
   getGlassPrice,
   getRoundingMultiple,
   getLaborCost,
+  getMinimumArea,
   getProfilePrices,
   type CatalogData,
   type ProductType,
@@ -359,7 +360,9 @@ export const useQuoteStore = create<QuoteStore>((set, get) => ({
       return {
         price: acc?.price || 0,
         priceCafe: acc?.priceCafe || 0,
+        name: acc?.name || '',
         code: acc?.code || '',
+        unit: acc?.unit || 'unidad',
         quantity: sa.quantity,
       };
     });
@@ -384,6 +387,7 @@ export const useQuoteStore = create<QuoteStore>((set, get) => ({
       profilePrices: lineProfilePrices,
       laborCost: getLaborCost(catalog, line.id),
       roundingMultiple: getRoundingMultiple(catalog, line.id),
+      minimumAreaM2: getMinimumArea(catalog, line.id),
     });
 
     set({ priceEstimate: estimate });

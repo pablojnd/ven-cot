@@ -75,12 +75,13 @@ export default function ReviewStep() {
         {estimate && allComplete && (
           <div className="mt-4 pt-3 border-t border-emerald-200">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700">Total estimado (con IVA)</span>
-              <span className="text-lg font-bold text-emerald-600">{fmt(estimate.total + estimate.tax)}</span>
+              <span className="text-sm font-semibold text-gray-700">Total neto estimado</span>
+              <span className="text-lg font-bold text-emerald-600">{fmt(estimate.total)}</span>
             </div>
             {store.quantity > 1 && (
-              <div className="text-xs text-gray-400 text-right">{fmt(estimate.unitTotal + Math.round(estimate.unitTotal * 0.19))} c/u</div>
+              <div className="text-xs text-gray-400 text-right">{fmt(estimate.unitTotal)} c/u neto</div>
             )}
+            <div className="text-xs text-gray-400 text-right">IVA referencial: {fmt(estimate.tax)}</div>
           </div>
         )}
       </div>
