@@ -293,51 +293,56 @@ export function calculatePrice(input: PriceCalculationInput): PriceBreakdown {
   // 6. Subtotal
   const subtotal = profilesTotal + glassTotal + accessoriesTotal + laborTotal;
 
-  // 7. Margin calculation based on color
+  // 7. Margin calculation — chain: natural/satinado (base), cafe (marginPctCafe),
+  //    bronce (+10% over cafe), titanio (+10%), blanco (+10%), madera (+15%)
   let marginMultiplier: number;
   let marginAmount: number;
+  let preTotal: number;
 
   switch (colorCode) {
     case 'natural':
+    case 'satinado':
       marginMultiplier = 1 + marginPct / 100;
       marginAmount = subtotal * (marginPct / 100);
+      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
       break;
     case 'cafe':
       marginMultiplier = 1 + marginPctCafe / 100;
       marginAmount = subtotal * (marginPctCafe / 100);
-      break;
-    case 'satinado':
-      marginMultiplier = 1 + marginPct / 100;
-      marginAmount = subtotal * (marginPct / 100);
-      break;
-    case 'bronce':
-      marginMultiplier = (1 + marginPct / 100) * 1.10;
-      marginAmount = subtotal * marginMultiplier - subtotal;
-      break;
-    case 'titanio':
-      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10;
-      marginAmount = subtotal * marginMultiplier - subtotal;
-      break;
-    case 'blanco':
-      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10 * 1.10;
-      marginAmount = subtotal * marginMultiplier - subtotal;
-      break;
-    case 'madera':
-      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10 * 1.10 * 1.10;
-      marginAmount = subtotal * marginMultiplier - subtotal;
+      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
       break;
     case 'ral':
       marginMultiplier = (1 + marginPct / 100) * (1 + 20 / 100);
       marginAmount = subtotal * (marginPct / 100) + subtotal * (1 + marginPct / 100) * (20 / 100);
+      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
       break;
-    default:
-      marginMultiplier = 1 + marginPct / 100;
-      marginAmount = subtotal * (marginPct / 100);
+    default: {
+      // Chain: cafe → bronce (+10%) → titanio (+10%) → blanco (+10%) → madera (+15%)
+      const incMap: Record<string, number[]> = {
+        bronce: [10],
+        titanio: [10, 10],
+        blanco: [10, 10, 10],
+        madera: [10, 10, 10, 15],
+      };
+      const increments = incMap[colorCode];
+      if (increments) {
+        let chainTotal = subtotal * (1 + marginPctCafe / 100);
+        chainTotal = Math.ceil(chainTotal / roundingMultiple) * roundingMultiple;
+        for (const inc of increments) {
+          chainTotal = chainTotal * (1 + inc / 100);
+          chainTotal = Math.ceil(chainTotal / roundingMultiple) * roundingMultiple;
+        }
+        marginMultiplier = subtotal > 0 ? chainTotal / subtotal : 1;
+        marginAmount = chainTotal - subtotal;
+        preTotal = chainTotal;
+      } else {
+        marginMultiplier = 1 + marginPct / 100;
+        marginAmount = subtotal * (marginPct / 100);
+        preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
+      }
+      break;
+    }
   }
-
-  // 8. Pre-total with CEILING rounding
-  const rawTotal = subtotal * marginMultiplier;
-  const preTotal = Math.ceil(rawTotal / roundingMultiple) * roundingMultiple;
 
   // 9. Total for quantity
   const total = preTotal * quantity;

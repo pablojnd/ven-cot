@@ -384,42 +384,52 @@ export function estimatePrice(params: {
   // 5. Subtotal
   const subtotal = profilesTotal + glassTotal + accessoriesTotal + laborTotal;
 
-  // 6. Margin calculation based on color — cascade chain: satinado → bronce (+10%) → titanio (+10%) → blanco (+10%) → madera (+10%)
+  // 6. Margin calculation — chain: natural/satinado (base), cafe (marginPctCafe),
+  //    bronce (+10% over cafe), titanio (+10%), blanco (+10%), madera (+15%)
   let marginMultiplier: number;
+  let preTotal: number;
+
   switch (colorCode) {
     case 'natural':
+    case 'satinado':
       marginMultiplier = 1 + marginPct / 100;
+      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
       break;
     case 'cafe':
       marginMultiplier = 1 + marginPctCafe / 100;
-      break;
-    case 'satinado':
-      marginMultiplier = 1 + marginPct / 100;
-      break;
-    case 'bronce':
-      marginMultiplier = (1 + marginPct / 100) * 1.10;
-      break;
-    case 'titanio':
-      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10;
-      break;
-    case 'blanco':
-      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10 * 1.10;
-      break;
-    case 'madera':
-      marginMultiplier = (1 + marginPct / 100) * 1.10 * 1.10 * 1.10 * 1.10;
+      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
       break;
     case 'ral':
       marginMultiplier = (1 + marginPct / 100) * (1 + 20 / 100);
+      preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
       break;
-    default:
-      marginMultiplier = 1 + marginPct / 100;
+    default: {
+      const incMap: Record<string, number[]> = {
+        bronce: [10],
+        titanio: [10, 10],
+        blanco: [10, 10, 10],
+        madera: [10, 10, 10, 15],
+      };
+      const increments = incMap[colorCode];
+      if (increments) {
+        let chainTotal = subtotal * (1 + marginPctCafe / 100);
+        chainTotal = Math.ceil(chainTotal / roundingMultiple) * roundingMultiple;
+        for (const inc of increments) {
+          chainTotal = chainTotal * (1 + inc / 100);
+          chainTotal = Math.ceil(chainTotal / roundingMultiple) * roundingMultiple;
+        }
+        marginMultiplier = subtotal > 0 ? chainTotal / subtotal : 1;
+        preTotal = chainTotal;
+      } else {
+        marginMultiplier = 1 + marginPct / 100;
+        preTotal = Math.ceil(subtotal * marginMultiplier / roundingMultiple) * roundingMultiple;
+      }
+      break;
+    }
   }
 
-  const marginAmount = subtotal * marginMultiplier - subtotal;
-
-  // 7. Pre-total with CEILING rounding
-  const rawTotal = subtotal * marginMultiplier;
-  const preTotal = Math.ceil(rawTotal / roundingMultiple) * roundingMultiple;
+  const marginAmount = preTotal - subtotal;
+  // marginMultiplier already set above
 
   // 8. Total for quantity
   const total = preTotal * quantity;
@@ -580,8 +590,6 @@ function getAvgProfileCostPerMeter(lineCode: string, useCafePrice: boolean): num
   // Average price per meter = average price per strip / 6m
   const costs: Record<string, [number, number]> = {
     'linea-5000': [9800, 11500],
-    'linea-7000': [12000, 14100],
-    'linea-8000': [25000, 27000],
     'brazo-ext': [12000, 15000],
     'vent-abatir': [7000, 8300],
     'cp-7095': [15600, 16600],

@@ -52,7 +52,7 @@ export default function QuoteSummary() {
           <CharacteristicRow
             icon={<Ruler className="w-3.5 h-3.5" />}
             label="Dimensiones"
-            value={store.widthMm > 0 ? `${Math.round(store.heightMm / 10)} cm × ${Math.round(store.widthMm / 10)} cm` : '—'}
+            value={store.widthMm > 0 ? `${(store.heightMm / 1000).toFixed(2)} m × ${(store.widthMm / 1000).toFixed(2)} m` : '—'}
           />
           <CharacteristicRow
             icon={<Ruler className="w-3.5 h-3.5" />}

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+const hiddenProductLineCodes = new Set(['linea-7000', 'linea-8000']);
+const hiddenProductLineNames = new Set(['Linea 7000', 'Línea 7000', 'Linea 8000', 'Línea 8000']);
+
 /**
  * GET /api/catalog
  * Returns all catalog data needed for the configurator.
@@ -84,18 +87,23 @@ export async function GET() {
       }),
     ]);
 
+    const visibleProductLines = productLines.filter(
+      (line) => !hiddenProductLineCodes.has(line.code) && !hiddenProductLineNames.has(line.name)
+    );
+    const visibleProductLineIds = new Set(visibleProductLines.map((line) => line.id));
+
     return NextResponse.json({
       productTypes,
-      productLines,
-      productTypeLines,
+      productLines: visibleProductLines,
+      productTypeLines: productTypeLines.filter((item) => visibleProductLineIds.has(item.productLineId)),
       colors,
-      productLineColors,
+      productLineColors: productLineColors.filter((item) => visibleProductLineIds.has(item.productLineId)),
       glassOptions,
-      productLineGlass,
+      productLineGlass: productLineGlass.filter((item) => visibleProductLineIds.has(item.productLineId)),
       accessories,
-      productLineAccessories,
-      profilePrices,
-      pricingRules,
+      productLineAccessories: productLineAccessories.filter((item) => visibleProductLineIds.has(item.productLineId)),
+      profilePrices: profilePrices.filter((item) => visibleProductLineIds.has(item.productLineId)),
+      pricingRules: pricingRules.filter((item) => visibleProductLineIds.has(item.productLineId)),
     });
   } catch (error) {
     console.error('Error fetching catalog:', error);

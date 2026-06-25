@@ -1,7 +1,65 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import { useQuoteStore } from '@/stores/quoteStore';
 import { Minus, Plus } from 'lucide-react';
+
+function DimensionInput({ label, valueMm, minM, maxM, onChange, onStep }: {
+  label: string;
+  valueMm: number;
+  minM: number;
+  maxM: number;
+  onChange: (mm: number) => void;
+  onStep: (delta: number) => void;
+}) {
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    setText((valueMm / 1000).toFixed(2));
+  }, [valueMm]);
+
+  const commit = useCallback((raw: string) => {
+    const normalized = raw.replace(',', '.');
+    const parsed = parseFloat(normalized);
+    if (!isNaN(parsed) && parsed >= minM && parsed <= maxM) {
+      onChange(Math.round(parsed * 1000));
+    } else {
+      setText((valueMm / 1000).toFixed(2));
+    }
+  }, [valueMm, minM, maxM, onChange]);
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">{label}</label>
+      <div className="flex items-center">
+        <button
+          onClick={() => onStep(-0.01)}
+          className="w-10 h-10 flex items-center justify-center rounded-l-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+        <div className="relative flex-1">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onBlur={() => commit(text)}
+            onKeyDown={(e) => { if (e.key === 'Enter') commit(text); }}
+            className="w-full h-10 text-center text-sm font-semibold border-y border-gray-300 focus:outline-none focus:border-[#0D5C63] focus:ring-1 focus:ring-[#0D5C63"
+          />
+        </div>
+        <button
+          onClick={() => onStep(0.01)}
+          className="w-10 h-10 flex items-center justify-center rounded-r-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+      <span className="text-xs text-gray-400">{minM.toFixed(2)} – {maxM.toFixed(2)} m</span>
+    </div>
+  );
+}
 
 export default function DimensionInputs() {
   const store = useQuoteStore();
@@ -22,67 +80,22 @@ export default function DimensionInputs() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Height */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Alto</label>
-          <div className="flex items-center">
-            <button
-              onClick={() => store.setHeight(store.heightMm - 50)}
-              className="w-10 h-10 flex items-center justify-center rounded-l-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
-            <div className="relative flex-1">
-              <input
-                type="number"
-                value={Math.round(store.heightMm / 10)}
-                onChange={(e) => store.setHeight(Number(e.target.value) * 10)}
-                min={40}
-                max={300}
-                step={5}
-                className="w-full h-10 text-center text-sm font-semibold border-y border-gray-300 focus:outline-none focus:border-[#0D5C63] focus:ring-1 focus:ring-[#0D5C63] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-            <button
-              onClick={() => store.setHeight(store.heightMm + 50)}
-              className="w-10 h-10 flex items-center justify-center rounded-r-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-          <span className="text-xs text-gray-400">40 – 300 cm</span>
-        </div>
-
-        {/* Width */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Ancho</label>
-          <div className="flex items-center">
-            <button
-              onClick={() => store.setWidth(store.widthMm - 50)}
-              className="w-10 h-10 flex items-center justify-center rounded-l-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
-            <div className="relative flex-1">
-              <input
-                type="number"
-                value={Math.round(store.widthMm / 10)}
-                onChange={(e) => store.setWidth(Number(e.target.value) * 10)}
-                min={40}
-                max={400}
-                step={5}
-                className="w-full h-10 text-center text-sm font-semibold border-y border-gray-300 focus:outline-none focus:border-[#0D5C63] focus:ring-1 focus:ring-[#0D5C63] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-            <button
-              onClick={() => store.setWidth(store.widthMm + 50)}
-              className="w-10 h-10 flex items-center justify-center rounded-r-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-          <span className="text-xs text-gray-400">40 – 400 cm</span>
-        </div>
+        <DimensionInput
+          label="Alto"
+          valueMm={store.heightMm}
+          minM={0.4}
+          maxM={3}
+          onChange={(mm) => store.setHeight(mm)}
+          onStep={(d) => store.setHeight(Math.round((store.heightMm / 1000 + d) * 1000))}
+        />
+        <DimensionInput
+          label="Ancho"
+          valueMm={store.widthMm}
+          minM={0.4}
+          maxM={4}
+          onChange={(mm) => store.setWidth(mm)}
+          onStep={(d) => store.setWidth(Math.round((store.widthMm / 1000 + d) * 1000))}
+        />
 
         {/* Panel count */}
         {showPanelCount && (

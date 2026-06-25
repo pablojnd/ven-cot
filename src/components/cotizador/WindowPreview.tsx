@@ -17,18 +17,16 @@ export default function WindowPreview() {
   }
 
   const code = productType.code;
-  const widthRatio = Math.min(store.widthMm / 2000, 1);
-  const heightRatio = Math.min(store.heightMm / 2000, 1);
+  const aspect = store.widthMm / Math.max(store.heightMm, 1);
 
-  // SVG viewBox dimensions
-  const vbW = 300;
-  const vbH = 260;
+  const vbW = 320;
+  const vbH = Math.round(320 / Math.max(aspect, 0.3));
   const margin = 30;
   const frameW = vbW - margin * 2;
   const frameH = vbH - margin * 2 - 20;
   const frameX = margin;
   const frameY = margin;
-  const profileWidth = 8;
+  const profileWidth = Math.max(6, Math.round(8 * (300 / Math.max(vbW, 200))));
 
   const renderFrame = () => {
     // Outer frame
@@ -332,7 +330,7 @@ export default function WindowPreview() {
         <line x1={frameX} y1={frameY + frameH + 10} x2={frameX} y2={frameY + frameH + 18} stroke="#9CA3AF" strokeWidth={1} />
         <line x1={frameX + frameW} y1={frameY + frameH + 10} x2={frameX + frameW} y2={frameY + frameH + 18} stroke="#9CA3AF" strokeWidth={1} />
         <text x={frameX + frameW / 2} y={frameY + frameH + 24} textAnchor="middle" className="text-[10px]" fill="#6B7280" fontWeight="500">
-          {Math.round(store.widthMm / 10)} cm
+          {(store.widthMm / 1000).toFixed(2)} m
         </text>
       </g>
       {/* Height label */}
@@ -341,7 +339,7 @@ export default function WindowPreview() {
         <line x1={frameX - 18} y1={frameY} x2={frameX - 10} y2={frameY} stroke="#9CA3AF" strokeWidth={1} />
         <line x1={frameX - 18} y1={frameY + frameH} x2={frameX - 10} y2={frameY + frameH} stroke="#9CA3AF" strokeWidth={1} />
         <text x={frameX - 16} y={frameY + frameH / 2} textAnchor="middle" transform={`rotate(-90, ${frameX - 16}, ${frameY + frameH / 2})`} className="text-[10px]" fill="#6B7280" fontWeight="500">
-          {Math.round(store.heightMm / 10)} cm
+          {(store.heightMm / 1000).toFixed(2)} m
         </text>
       </g>
     </svg>

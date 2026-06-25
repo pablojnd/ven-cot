@@ -46,6 +46,11 @@ interface QuoteConfigState {
   quantity: number;
   observations: string;
 
+  // Client data
+  clientName: string;
+  clientPhone: string;
+  clientEmail: string;
+
   // Quote submission
   submitting: boolean;
   submitError: string | null;
@@ -58,6 +63,11 @@ interface QuoteConfigState {
 interface QuoteConfigActions {
   // Catalog
   loadCatalog: () => Promise<void>;
+
+  // Client data
+  setClientName: (name: string) => void;
+  setClientPhone: (phone: string) => void;
+  setClientEmail: (email: string) => void;
 
   // Configuration
   setProductType: (id: string) => void;
@@ -194,6 +204,9 @@ const initialState: QuoteConfigState = {
   selectedAccessories: [],
   quantity: 1,
   observations: '',
+  clientName: '',
+  clientPhone: '',
+  clientEmail: '',
   submitting: false,
   submitError: null,
   lastQuote: null,
@@ -308,6 +321,18 @@ export const useQuoteStore = create<QuoteStore>((set, get) => ({
     set({ observations: obs });
   },
 
+  setClientName: (name: string) => {
+    set({ clientName: name });
+  },
+
+  setClientPhone: (phone: string) => {
+    set({ clientPhone: phone });
+  },
+
+  setClientEmail: (email: string) => {
+    set({ clientEmail: email });
+  },
+
   recalculatePrice: () => {
     const state = get();
     const line = getCurrentProductLine(state);
@@ -388,6 +413,9 @@ export const useQuoteStore = create<QuoteStore>((set, get) => ({
 
     try {
       const quote = await createQuote({
+        clientName: state.clientName || undefined,
+        clientPhone: state.clientPhone || undefined,
+        clientEmail: state.clientEmail || undefined,
         notes: state.observations || undefined,
         items: [item],
       });

@@ -17,27 +17,23 @@ async function main() {
   // PRODUCT LINES (real Crispieri lines)
   // ═══════════════════════════════════════════
   const l5000 = await db.productLine.create({ data: { name: 'Línea 5000', code: 'linea-5000', description: 'Línea 5000 corredera estándar', marginPct: 15, marginPctCafe: 25, sortOrder: 1 } });
-  const l7000 = await db.productLine.create({ data: { name: 'Línea 7000', code: 'linea-7000', description: 'Línea 7000 corredera premium', marginPct: 80, marginPctCafe: 80, sortOrder: 2 } });
-  const l8000 = await db.productLine.create({ data: { name: 'Línea 8000', code: 'linea-8000', description: 'Línea 8000 con termopanel', marginPct: 10, marginPctCafe: 10, sortOrder: 3 } });
-  const brazoExt = await db.productLine.create({ data: { name: 'Ventana Brazo Ext.', code: 'brazo-ext', description: 'Ventana con brazo exterior', marginPct: 15, marginPctCafe: 15, sortOrder: 4 } });
-  const ventAbatir = await db.productLine.create({ data: { name: 'Ventana de Abatir', code: 'vent-abatir', description: 'Ventana de abatir', marginPct: 40, marginPctCafe: 80, sortOrder: 5 } });
-  const cp7095 = await db.productLine.create({ data: { name: 'Centro Puerta 7095/5034', code: 'cp-7095', description: 'Fijo con centro de puerta 7095/5034', marginPct: 30, marginPctCafe: 30, sortOrder: 6 } });
-  const cp3060 = await db.productLine.create({ data: { name: 'Centro Puerta 30x60/40x80', code: 'cp-3060', description: 'Centro puerta tubular 30x60 o 40x80', marginPct: 20, marginPctCafe: 30, sortOrder: 7 } });
-  const puertaTubo = await db.productLine.create({ data: { name: 'Puerta Tubo 40x40/40x100', code: 'puerta-tubo', description: 'Puerta tubo 40x40 o 40x100', marginPct: 20, marginPctCafe: 20, sortOrder: 8 } });
-  const fijoTub = await db.productLine.create({ data: { name: 'Fijo Tubular Rectangular', code: 'fijo-tubular', description: 'Fijo con tubular rectangular', marginPct: 40, marginPctCafe: 40, sortOrder: 9 } });
-  const fijoCP = await db.productLine.create({ data: { name: 'Fijo con Centro de Puerta', code: 'fijo-cp', description: 'Fijo con centro de puerta', marginPct: 40, marginPctCafe: 80, sortOrder: 10 } });
-  const celosias = await db.productLine.create({ data: { name: 'Celosías', code: 'celosias', description: 'Celosías de aluminio', marginPct: 50, marginPctCafe: 50, sortOrder: 11 } });
-  const showerDoor = await db.productLine.create({ data: { name: 'Shower Door AM-12', code: 'shower-am12', description: 'Shower Door línea AM-12 ALUMCO', marginPct: 10, marginPctCafe: 10, sortOrder: 12 } });
+  const brazoExt = await db.productLine.create({ data: { name: 'Ventana Brazo Ext.', code: 'brazo-ext', description: 'Ventana con brazo exterior', marginPct: 15, marginPctCafe: 15, sortOrder: 2 } });
+  const ventAbatir = await db.productLine.create({ data: { name: 'Ventana de Abatir', code: 'vent-abatir', description: 'Ventana de abatir', marginPct: 40, marginPctCafe: 80, sortOrder: 3 } });
+  const cp7095 = await db.productLine.create({ data: { name: 'Centro Puerta 7095/5034', code: 'cp-7095', description: 'Fijo con centro de puerta 7095/5034', marginPct: 30, marginPctCafe: 30, sortOrder: 4 } });
+  const cp3060 = await db.productLine.create({ data: { name: 'Centro Puerta 30x60/40x80', code: 'cp-3060', description: 'Centro puerta tubular 30x60 o 40x80', marginPct: 20, marginPctCafe: 30, sortOrder: 5 } });
+  const puertaTubo = await db.productLine.create({ data: { name: 'Puerta Tubo 40x40/40x100', code: 'puerta-tubo', description: 'Puerta tubo 40x40 o 40x100', marginPct: 20, marginPctCafe: 20, sortOrder: 6 } });
+  const fijoTub = await db.productLine.create({ data: { name: 'Fijo Tubular Rectangular', code: 'fijo-tubular', description: 'Fijo con tubular rectangular', marginPct: 40, marginPctCafe: 40, sortOrder: 7 } });
+  const fijoCP = await db.productLine.create({ data: { name: 'Fijo con Centro de Puerta', code: 'fijo-cp', description: 'Fijo con centro de puerta', marginPct: 40, marginPctCafe: 80, sortOrder: 8 } });
+  const celosias = await db.productLine.create({ data: { name: 'Celosías', code: 'celosias', description: 'Celosías de aluminio', marginPct: 50, marginPctCafe: 50, sortOrder: 9 } });
+  const showerDoor = await db.productLine.create({ data: { name: 'Shower Door AM-12', code: 'shower-am12', description: 'Shower Door línea AM-12 ALUMCO', marginPct: 10, marginPctCafe: 10, sortOrder: 10 } });
 
-  const allLines = [l5000, l7000, l8000, brazoExt, ventAbatir, cp7095, cp3060, puertaTubo, fijoTub, fijoCP, celosias, showerDoor];
+  const allLines = [l5000, brazoExt, ventAbatir, cp7095, cp3060, puertaTubo, fijoTub, fijoCP, celosias, showerDoor];
 
   // ═══════════════════════════════════════════
   // PRODUCT TYPE ↔ LINE associations
   // ═══════════════════════════════════════════
-  // Correderas: Línea 5000, 7000, 8000
-  for (const l of [l5000, l7000, l8000]) {
-    await db.productTypeLine.create({ data: { productTypeId: corredera.id, productLineId: l.id } });
-  }
+  // Correderas: Línea 5000
+  await db.productTypeLine.create({ data: { productTypeId: corredera.id, productLineId: l5000.id } });
   // Abatibles: Brazo Ext, Ventana Abatir
   for (const l of [brazoExt, ventAbatir]) {
     await db.productTypeLine.create({ data: { productTypeId: abatible.id, productLineId: l.id } });
@@ -69,24 +65,17 @@ async function main() {
   const allColors = [natural, cafe, satinado, bronce, titanio, blanco, madera];
 
   // Associate colors with lines (varies by line)
-  // Most lines have: natural, café, satinado, bronce, titanio, blanco
-  // Some also have: madera
-  // Línea 7000 and Celosías: only natural, café, satinado, bronce, titanio
   for (const l of allLines) {
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: natural.id } });
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: cafe.id } });
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: satinado.id } });
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: bronce.id } });
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: titanio.id } });
+    await db.productLineColor.create({ data: { productLineId: l.id, colorId: blanco.id } });
 
-    if (![l7000.id, celosias.id].includes(l.id)) {
-      await db.productLineColor.create({ data: { productLineId: l.id, colorId: blanco.id } });
-    }
-
-    if ([l5000.id, l8000.id, cp7095.id, puertaTubo.id, fijoTub.id, fijoCP.id].includes(l.id)) {
+    if ([l5000.id, cp7095.id, puertaTubo.id, fijoTub.id, fijoCP.id].includes(l.id)) {
       await db.productLineColor.create({ data: { productLineId: l.id, colorId: madera.id } });
     }
-
   }
 
   // ═══════════════════════════════════════════
@@ -122,26 +111,6 @@ async function main() {
   ];
   for (const [g, p] of l5kGlass) {
     await db.productLineGlass.create({ data: { productLineId: l5000.id, glassOptionId: g.id, pricePerM2: p } });
-  }
-
-  // Línea 7000 glass prices (lower — these are per m² for this line)
-  const l7kGlass = [
-    [gDoble, 5500], [gTriple, 7250], [gVitrea, 9000], [gBronc4, 8250],
-    [gBronc5, 10125], [gCatedral, 6875], [gCatColor, 10560], [gCrInc6, 11000],
-    [gSolarCool, 15750],
-  ];
-  for (const [g, p] of l7kGlass) {
-    await db.productLineGlass.create({ data: { productLineId: l7000.id, glassOptionId: g.id, pricePerM2: p } });
-  }
-
-  // Línea 8000 glass prices
-  const l8kGlass = [
-    [gTriple, 21200], [gVitrea, 26500], [gCrInc6, 31800], [gBronc4, 23320],
-    [gBronc5, 29150], [gBronc6, 34980], [gCatedral, 18900], [gCatColor, 23330],
-    [gSolarCool, 35810], [gInast6, 60230], [gTermopanel, 39600],
-  ];
-  for (const [g, p] of l8kGlass) {
-    await db.productLineGlass.create({ data: { productLineId: l8000.id, glassOptionId: g.id, pricePerM2: p } });
   }
 
   // Ventana con Brazo Ext. glass prices
@@ -252,14 +221,6 @@ async function main() {
   for (const a of [accBurlete, accFelpa, accRodamiento, accPestillo]) {
     await db.productLineAccessory.create({ data: { productLineId: l5000.id, accessoryId: a.id } });
   }
-  // Línea 7000: burlete, felpa, rodamiento, pestillo
-  for (const a of [accBurlete, accFelpa, accRodamiento, accPestillo]) {
-    await db.productLineAccessory.create({ data: { productLineId: l7000.id, accessoryId: a.id } });
-  }
-  // Línea 8000: burlete, felpa, rodamiento, pestillo
-  for (const a of [accBurlete, accFelpa, accRodamiento, accPestillo]) {
-    await db.productLineAccessory.create({ data: { productLineId: l8000.id, accessoryId: a.id } });
-  }
   // Brazo Ext: felpa, manilla, brazo exterior, amarre
   for (const a of [accFelpa, accManilla, accBrazoExt, accAmarre]) {
     await db.productLineAccessory.create({ data: { productLineId: brazoExt.id, accessoryId: a.id } });
@@ -309,44 +270,6 @@ async function main() {
   ];
   for (const [name, code, nat, caf] of l5kProfiles) {
     await db.profilePrice.create({ data: { productLineId: l5000.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
-  }
-
-  // Línea 7000 profiles
-  const l7kProfiles = [
-    ['Riel Inferior', '7001', 11275, 13224],
-    ['Riel Superior', '7002', 14167, 16616],
-    ['Jamba', '7003', 10303, 12084],
-    ['Cabecera Inferior', '7004', 13705, 16074],
-    ['Cabecera Superior', '7005', 10498, 12312],
-    ['Traslapo', '7006', 11810, 13851],
-    ['Pierna', '7007', 11154, 13082],
-    ['Palillo', '7005', 10498, 12312],
-    ['Perfil 4ª Hoja', '7009', 6099, 7154],
-    ['Placa Aluminio', '5859', 14500, 17100],
-    ['Tubo Rectangular 30x60', '30x60', 17978, 21150],
-    ['Tubo Rectangular 76x25', '76x25', 20273, 23850],
-  ];
-  for (const [name, code, nat, caf] of l7kProfiles) {
-    await db.profilePrice.create({ data: { productLineId: l7000.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
-  }
-
-  // Línea 8000 profiles
-  const l8kProfiles = [
-    ['Riel Inferior', '8001', 30540, 32990],
-    ['Riel Superior', '8002', 31300, 33800],
-    ['Jamba', '8003', 23290, 25160],
-    ['Cabecera Inferior', '8004', 28560, 30860],
-    ['Cabecera Superior', '8005', 20190, 21800],
-    ['Traslapo', '8006', 24780, 26760],
-    ['Pierna', '8007', 24210, 26150],
-    ['Palillo', '8013', 22370, 24170],
-    ['Perfil 4ª Hoja', '8017', 5030, 5900],
-    ['Placa Aluminio', '5859', 21150, 22850],
-    ['Tubo Rectangular 30x60', '30x60', 28420, 30690],
-    ['Tubo Rectangular 76x25', '76x25', 28590, 30880],
-  ];
-  for (const [name, code, nat, caf] of l8kProfiles) {
-    await db.profilePrice.create({ data: { productLineId: l8000.id, profileName: name, profileCode: code, priceNatural: nat, priceCafe: caf, stripLengthM: 6 } });
   }
 
   // Ventana Brazo Ext. profiles
@@ -472,8 +395,6 @@ async function main() {
 
   // Mano de obra por línea
   await db.pricingRule.create({ data: { productLineId: l5000.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 17000, unit: 'CLP' } });
-  await db.pricingRule.create({ data: { productLineId: l7000.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 17000, unit: 'CLP' } });
-  await db.pricingRule.create({ data: { productLineId: l8000.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 17000, unit: 'CLP' } });
   await db.pricingRule.create({ data: { productLineId: brazoExt.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 20000, unit: 'CLP' } });
   await db.pricingRule.create({ data: { productLineId: ventAbatir.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 20000, unit: 'CLP' } });
   await db.pricingRule.create({ data: { productLineId: cp7095.id, name: 'Mano de obra', ruleType: 'labor_cost', value: 25000, unit: 'CLP' } });
@@ -486,13 +407,13 @@ async function main() {
 
   console.log('✅ Seed completed successfully!');
   console.log(`  - 6 product types`);
-  console.log(`  - 12 product lines with real Crispieri margins`);
+  console.log(`  - 10 product lines with real Crispieri margins`);
   console.log(`  - 7 colors with cascade pricing`);
   console.log(`  - 19 glass options`);
-  console.log(`  - Glass prices per line (${12}+ line-glass combos)`);
+  console.log(`  - Glass prices per line (${10}+ line-glass combos)`);
   console.log(`  - 12 accessories with natural/café prices`);
-  console.log(`  - Profile prices for all 12 lines`);
-  console.log(`  - 60 pricing rules`);
+  console.log(`  - Profile prices for all 10 lines`);
+  console.log(`  - 48 pricing rules`);
 }
 
 main()

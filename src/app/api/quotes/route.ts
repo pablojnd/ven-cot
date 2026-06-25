@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateQuoteNumber } from '@/lib/quoteNumber';
 import { calculatePrice, generateBreakdownRecords } from '@/lib/pricing';
+import { sendQuoteEmails } from '@/lib/email';
 import { z } from 'zod';
 
 // ============================================
@@ -316,6 +317,30 @@ export async function POST(request: NextRequest) {
 
       return updatedQuote;
     });
+
+    // Send emails asynchronously (don't block response)
+    sendQuoteEmails({
+      id: quote.id,
+      quoteNumber: quote.quoteNumber,
+      clientName: quote.clientName,
+      clientPhone: quote.clientPhone,
+      clientEmail: quote.clientEmail,
+      totalSubtotal: quote.totalSubtotal,
+      totalTax: quote.totalTax,
+      totalAmount: quote.totalAmount,
+      items: quote.items.map((item) => ({
+        quantity: item.quantity,
+        productType: item.productType,
+        productLine: item.productLine,
+        widthMm: item.widthMm,
+        heightMm: item.heightMm,
+        panelCount: item.panelCount,
+        color: item.color,
+        glassOption: item.glassOption,
+        total: item.total,
+        observations: item.observations,
+      })),
+    }).catch((err) => console.error('Error sending quote emails:', err));
 
     return NextResponse.json(quote, { status: 201 });
   } catch (error) {
