@@ -9,7 +9,6 @@ import DimensionInputs from './DimensionInputs';
 import ColorSelector from './ColorSelector';
 import GlassSelector from './GlassSelector';
 import QuantityNotes from './QuantityNotes';
-import ReviewStep from './ReviewStep';
 import QuoteSummary from './QuoteSummary';
 import { Loader2, AlertCircle } from 'lucide-react';
 
@@ -57,7 +56,6 @@ export default function QuoteConfigurator() {
               <ColorSelector />
               <GlassSelector />
               <QuantityNotes />
-              <ReviewStep />
             </div>
 
             {/* Right column: Preview & Summary (1/3) - sticky */}
