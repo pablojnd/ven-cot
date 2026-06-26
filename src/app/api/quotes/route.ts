@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
               accessoryId: acc.accessoryId,
               quantity: acc.quantity,
               unitPrice: acc.unitPrice,
-              totalPrice: acc.total,
+              totalPrice: acc.totalPrice,
             },
           });
         }

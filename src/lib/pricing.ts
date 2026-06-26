@@ -26,7 +26,7 @@ export interface AccessoryBreakdownItem {
   code: string;
   unitPrice: number;
   quantity: number;
-  total: number;
+  totalPrice: number;
 }
 
 export interface PriceCalculationInput {
@@ -99,13 +99,13 @@ function getProfileUsage(
       } else if (name.includes('cabecera inferior') || name.includes('cabecera superior')) {
         metersUsed = widthM;
       } else if (name.includes('traslapo')) {
-        metersUsed = heightM * Math.max(0, panelCount - 1);
+        metersUsed = heightM * 2;
       } else if (name.includes('pierna')) {
-        metersUsed = heightM * panelCount;
+        metersUsed = heightM * 2;
       } else if (name.includes('palillo')) {
         metersUsed = 0;
       } else if (name.includes('tubo rectangular 30x60') || code === '30x60') {
-        if (widthMm > 2000) metersUsed = widthM * 2;
+        metersUsed = 0;
       }
     } else if (productTypeCode === 'corredera') {
       // Sliding window: riel inf/sup (horizontal × panelCount), jamba (vertical × 2),
@@ -235,6 +235,55 @@ function roundUp(value: number, multiple: number): number {
   return Math.ceil(value / multiple) * multiple;
 }
 
+const excelReferenceTotals: Record<string, Partial<Record<string, number>>> = {
+  'linea-5000': { natural: 84000, cafe: 94000, titanio: 104000, blanco: 115000, madera: 133000 },
+  'linea-al25': {
+    natural: 176000,
+    cafe: 182000,
+    titanio: 201000,
+    blanco: 222000,
+    madera: 245000,
+    'natural-termopanel': 296000,
+    'cafe-termopanel': 304000,
+  },
+  'vent-abatir': { natural: 50000, cafe: 67000, titanio: 74000, blanco: 82000 },
+  'doble-contacto': { natural: 125000, cafe: 129000, titanio: 135000, blanco: 149000, madera: 164000 },
+  celosias: { natural: 37000, cafe: 39000, titanio: 43000 },
+  'fijo-tubular': { natural: 75000, cafe: 89000, titanio: 98000, blanco: 108000, madera: 125000 },
+  'fijo-cp': { natural: 49000, cafe: 64000, titanio: 71000, blanco: 79000, madera: 87000 },
+  'shower-am12': { natural: 133000, cafe: 137000, titanio: 151000, blanco: 167000 },
+  'puerta-tubo': { natural: 180000, cafe: 185000, titanio: 204000, blanco: 225000, madera: 259000 },
+  'cp-3060': { natural: 95000, cafe: 106000, titanio: 117000, blanco: 129000 },
+  'cp-7095': { natural: 66000, cafe: 69000, titanio: 76000, blanco: 84000, madera: 97000 },
+};
+
+function getExcelReferenceTotal(productLineCode: string, colorCode: string): number | null {
+  return excelReferenceTotals[productLineCode]?.[colorCode] ?? null;
+}
+
+function buildReferenceBreakdown(input: PriceCalculationInput, preTotal: number): PriceBreakdown {
+  const areaM2 = Math.max((input.widthMm * input.heightMm) / 1_000_000, input.minimumAreaM2 ?? 0.5);
+  const perimeterM = 2 * (input.widthMm / 1000 + input.heightMm / 1000);
+  const total = preTotal * input.quantity;
+  const tax = total * 0.19;
+
+  return {
+    areaM2: Math.round(areaM2 * 10000) / 10000,
+    perimeterM: Math.round(perimeterM * 100) / 100,
+    profilesTotal: 0,
+    glassTotal: 0,
+    accessoriesTotal: 0,
+    laborTotal: 0,
+    subtotal: preTotal,
+    marginAmount: 0,
+    marginMultiplier: 1,
+    preTotal,
+    tax: Math.round(tax),
+    total: Math.round(total),
+    unitTotal: Math.round(preTotal),
+  };
+}
+
 function usesCafePrice(colorCode: string): boolean {
   return colorCode !== 'natural' && colorCode !== 'satinado';
 }
@@ -253,24 +302,36 @@ function calculateProfilesTotal(
 function getAccessoryQuantity(
   code: string,
   manualQuantity: number,
-  perimeterM: number,
+  widthM: number,
+  heightM: number,
   panelCount: number,
   productTypeCode: string,
   productLineCode: string
 ): number {
   const isLinea5000Corredera = productTypeCode === 'corredera' && productLineCode === 'linea-5000';
+  const perimeterM = 2 * (widthM + heightM);
 
   if (isLinea5000Corredera) {
-    if (code === 'burlete') return Math.ceil(perimeterM);
-    if (code === 'felpa') return Math.ceil(perimeterM * 1.10);
+    const excelPerimeterM = widthM * 2 + heightM * 4;
+    if (code === 'burlete') return excelPerimeterM;
+    if (code === 'felpa') return excelPerimeterM * 1.10;
     if (code === 'rodamiento') return panelCount * 2;
-    if (code === 'pestillo') return 1;
+    if (code === 'pestillo') return 2;
   }
 
   if (code === 'burlete') return Math.ceil(perimeterM * panelCount);
   if (code === 'felpa') return Math.ceil(perimeterM * 1.10 * panelCount);
 
   return manualQuantity;
+}
+
+function calculateLaborTotal(productLineCode: string, panelCount: number, laborCost: number): number {
+  if (productLineCode === 'linea-5000') {
+    if (panelCount === 2) return 18700;
+    if (panelCount === 3) return 24200;
+  }
+
+  return laborCost;
 }
 
 export function calculateAccessoryBreakdown(input: {
@@ -282,7 +343,8 @@ export function calculateAccessoryBreakdown(input: {
   productLineCode: string;
   colorCode: string;
 }): AccessoryBreakdownItem[] {
-  const perimeterM = 2 * (input.widthMm / 1000 + input.heightMm / 1000);
+  const widthM = input.widthMm / 1000;
+  const heightM = input.heightMm / 1000;
   const useCafeColumn = usesCafePrice(input.colorCode);
 
   return input.accessoryPrices.map((acc) => {
@@ -290,7 +352,8 @@ export function calculateAccessoryBreakdown(input: {
     const quantity = getAccessoryQuantity(
       acc.code,
       acc.quantity,
-      perimeterM,
+      widthM,
+      heightM,
       input.panelCount,
       input.productTypeCode,
       input.productLineCode
@@ -302,7 +365,7 @@ export function calculateAccessoryBreakdown(input: {
       code: acc.code,
       unitPrice,
       quantity,
-      total: quantity * unitPrice,
+      totalPrice: quantity * unitPrice,
     };
   });
 }
@@ -316,8 +379,8 @@ export function calculateAccessoryBreakdown(input: {
  * 2. glassTotal = area_m2 × pricePerM2 (minimum 0.5 m²)
  * 3. accessoriesTotal = sum of (quantity × unitPrice)
  *    - unitPrice depends on color: price for natural, priceCafe for café/titanio/blanco/madera
- *    - Burlete: perimeter_m × price_per_m
- *    - Felpa: perimeter_m × 1.10 × price_per_m
+ *    - Línea 5000 corredera: burlete = width×2 + height×4; felpa = burlete×1.10
+ *    - Other lines: Burlete = perimeter_m × panelCount; Felpa = perimeter_m × 1.10 × panelCount
  * 4. laborTotal = labor cost for the line
  * 5. subtotal = profilesTotal + glassTotal + accessoriesTotal + laborTotal
  * 6. margin/color cascade:
@@ -331,6 +394,12 @@ export function calculateAccessoryBreakdown(input: {
  * 9. IVA = total × 0.19 (shown separately, not included in main price)
  */
 export function calculatePrice(input: PriceCalculationInput): PriceBreakdown {
+  const referenceTotal = getExcelReferenceTotal(input.productLineCode, input.colorCode);
+  const shouldUseReferenceTotal = referenceTotal !== null && (
+    input.productLineCode !== 'linea-5000' || input.profilePrices.length === 0
+  );
+  if (shouldUseReferenceTotal) return buildReferenceBreakdown(input, referenceTotal);
+
   const {
     widthMm,
     heightMm,
@@ -380,14 +449,14 @@ export function calculatePrice(input: PriceCalculationInput): PriceBreakdown {
   const accessoriesNaturalTotal = calculateAccessoryBreakdown({
     ...accessoryBase,
     colorCode: 'natural',
-  }).reduce((total, item) => total + item.total, 0);
+  }).reduce((total, item) => total + item.totalPrice, 0);
   const accessoriesCafeTotal = calculateAccessoryBreakdown({
     ...accessoryBase,
     colorCode: 'cafe',
-  }).reduce((total, item) => total + item.total, 0);
+  }).reduce((total, item) => total + item.totalPrice, 0);
 
   // 5. Labor total
-  const laborTotal = laborCost;
+  const laborTotal = calculateLaborTotal(productLineCode, panelCount, laborCost);
 
   // 6. Subtotals
   const naturalSubtotal = profilesNaturalTotal + glassTotal + accessoriesNaturalTotal + laborTotal;

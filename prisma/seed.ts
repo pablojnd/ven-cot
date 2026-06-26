@@ -17,25 +17,28 @@ async function main() {
   // PRODUCT LINES (real Crispieri lines)
   // ═══════════════════════════════════════════
   const l5000 = await db.productLine.create({ data: { name: 'Línea 5000', code: 'linea-5000', description: 'Línea 5000 corredera estándar', marginPct: 15, marginPctCafe: 25, sortOrder: 1 } });
-  const brazoExt = await db.productLine.create({ data: { name: 'Ventana Brazo Ext.', code: 'brazo-ext', description: 'Ventana con brazo exterior', marginPct: 15, marginPctCafe: 15, sortOrder: 2 } });
-  const ventAbatir = await db.productLine.create({ data: { name: 'Ventana de Abatir', code: 'vent-abatir', description: 'Ventana de abatir', marginPct: 40, marginPctCafe: 80, sortOrder: 3 } });
-  const cp7095 = await db.productLine.create({ data: { name: 'Centro Puerta 7095/5034', code: 'cp-7095', description: 'Fijo con centro de puerta 7095/5034', marginPct: 30, marginPctCafe: 30, sortOrder: 4 } });
-  const cp3060 = await db.productLine.create({ data: { name: 'Centro Puerta 30x60/40x80', code: 'cp-3060', description: 'Centro puerta tubular 30x60 o 40x80', marginPct: 20, marginPctCafe: 30, sortOrder: 5 } });
-  const puertaTubo = await db.productLine.create({ data: { name: 'Puerta Tubo 40x40/40x100', code: 'puerta-tubo', description: 'Puerta tubo 40x40 o 40x100', marginPct: 20, marginPctCafe: 20, sortOrder: 6 } });
-  const fijoTub = await db.productLine.create({ data: { name: 'Fijo Tubular Rectangular', code: 'fijo-tubular', description: 'Fijo con tubular rectangular', marginPct: 40, marginPctCafe: 40, sortOrder: 7 } });
-  const fijoCP = await db.productLine.create({ data: { name: 'Fijo con Centro de Puerta', code: 'fijo-cp', description: 'Fijo con centro de puerta', marginPct: 40, marginPctCafe: 80, sortOrder: 8 } });
-  const celosias = await db.productLine.create({ data: { name: 'Celosías', code: 'celosias', description: 'Celosías de aluminio', marginPct: 50, marginPctCafe: 50, sortOrder: 9 } });
-  const showerDoor = await db.productLine.create({ data: { name: 'Shower Door AM-12', code: 'shower-am12', description: 'Shower Door línea AM-12 ALUMCO', marginPct: 10, marginPctCafe: 10, sortOrder: 10 } });
+  const al25 = await db.productLine.create({ data: { name: 'Línea AL25', code: 'linea-al25', description: 'Línea AL25 corredera grandes', marginPct: 0, marginPctCafe: 0, sortOrder: 2 } });
+  const brazoExt = await db.productLine.create({ data: { name: 'Ventana Brazo Ext.', code: 'brazo-ext', description: 'Ventana con brazo exterior', marginPct: 15, marginPctCafe: 15, sortOrder: 3 } });
+  const dobleContacto = await db.productLine.create({ data: { name: 'Doble Contacto', code: 'doble-contacto', description: 'Ventana doble contacto', marginPct: 0, marginPctCafe: 0, sortOrder: 4 } });
+  const ventAbatir = await db.productLine.create({ data: { name: 'Ventana de Abatir', code: 'vent-abatir', description: 'Ventana de abatir', marginPct: 40, marginPctCafe: 80, sortOrder: 5 } });
+  const cp7095 = await db.productLine.create({ data: { name: 'Centro Puerta 7095/5034', code: 'cp-7095', description: 'Fijo con centro de puerta 7095/5034', marginPct: 30, marginPctCafe: 30, sortOrder: 6 } });
+  const cp3060 = await db.productLine.create({ data: { name: 'Centro Puerta 30x60/40x80', code: 'cp-3060', description: 'Centro puerta tubular 30x60 o 40x80', marginPct: 20, marginPctCafe: 30, sortOrder: 7 } });
+  const puertaTubo = await db.productLine.create({ data: { name: 'Puerta Tubo 40x40/40x100', code: 'puerta-tubo', description: 'Puerta tubo 40x40 o 40x100', marginPct: 20, marginPctCafe: 20, sortOrder: 8 } });
+  const fijoTub = await db.productLine.create({ data: { name: 'Fijo Tubular Rectangular', code: 'fijo-tubular', description: 'Fijo con tubular rectangular', marginPct: 40, marginPctCafe: 40, sortOrder: 9 } });
+  const fijoCP = await db.productLine.create({ data: { name: 'Fijo con Centro de Puerta', code: 'fijo-cp', description: 'Fijo con centro de puerta', marginPct: 40, marginPctCafe: 80, sortOrder: 10 } });
+  const celosias = await db.productLine.create({ data: { name: 'Celosías', code: 'celosias', description: 'Celosías de aluminio', marginPct: 50, marginPctCafe: 50, sortOrder: 11 } });
+  const showerDoor = await db.productLine.create({ data: { name: 'Shower Door AM-12', code: 'shower-am12', description: 'Shower Door línea AM-12 ALUMCO', marginPct: 10, marginPctCafe: 10, sortOrder: 12 } });
 
-  const allLines = [l5000, brazoExt, ventAbatir, cp7095, cp3060, puertaTubo, fijoTub, fijoCP, celosias, showerDoor];
+  const allLines = [l5000, al25, brazoExt, dobleContacto, ventAbatir, cp7095, cp3060, puertaTubo, fijoTub, fijoCP, celosias, showerDoor];
 
   // ═══════════════════════════════════════════
   // PRODUCT TYPE ↔ LINE associations
   // ═══════════════════════════════════════════
-  // Correderas: Línea 5000
+  // Correderas: Línea 5000, AL25
   await db.productTypeLine.create({ data: { productTypeId: corredera.id, productLineId: l5000.id } });
+  await db.productTypeLine.create({ data: { productTypeId: corredera.id, productLineId: al25.id } });
   // Abatibles: Brazo Ext, Ventana Abatir
-  for (const l of [brazoExt, ventAbatir]) {
+  for (const l of [brazoExt, dobleContacto, ventAbatir]) {
     await db.productTypeLine.create({ data: { productTypeId: abatible.id, productLineId: l.id } });
   }
   // Puertas: Centro Puerta 7095, 30x60, Puerta Tubo
@@ -73,7 +76,7 @@ async function main() {
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: titanio.id } });
     await db.productLineColor.create({ data: { productLineId: l.id, colorId: blanco.id } });
 
-    if ([l5000.id, cp7095.id, puertaTubo.id, fijoTub.id, fijoCP.id].includes(l.id)) {
+    if ([l5000.id, al25.id, dobleContacto.id, cp7095.id, puertaTubo.id, fijoTub.id, fijoCP.id].includes(l.id)) {
       await db.productLineColor.create({ data: { productLineId: l.id, colorId: madera.id } });
     }
   }
@@ -112,6 +115,9 @@ async function main() {
   for (const [g, p] of l5kGlass) {
     await db.productLineGlass.create({ data: { productLineId: l5000.id, glassOptionId: g.id, pricePerM2: p } });
   }
+  for (const [g, p] of l5kGlass) {
+    await db.productLineGlass.create({ data: { productLineId: al25.id, glassOptionId: g.id, pricePerM2: p } });
+  }
 
   // Ventana con Brazo Ext. glass prices
   const bxtGlass = [
@@ -121,6 +127,9 @@ async function main() {
   ];
   for (const [g, p] of bxtGlass) {
     await db.productLineGlass.create({ data: { productLineId: brazoExt.id, glassOptionId: g.id, pricePerM2: p } });
+  }
+  for (const [g, p] of bxtGlass) {
+    await db.productLineGlass.create({ data: { productLineId: dobleContacto.id, glassOptionId: g.id, pricePerM2: p } });
   }
 
   // Ventana de Abatir glass prices
@@ -407,13 +416,13 @@ async function main() {
 
   console.log('✅ Seed completed successfully!');
   console.log(`  - 6 product types`);
-  console.log(`  - 10 product lines with real Crispieri margins`);
+  console.log(`  - 12 product lines with real Crispieri margins`);
   console.log(`  - 7 colors with cascade pricing`);
   console.log(`  - 19 glass options`);
   console.log(`  - Glass prices per line (${10}+ line-glass combos)`);
   console.log(`  - 12 accessories with natural/café prices`);
   console.log(`  - Profile prices for all 10 lines`);
-  console.log(`  - 48 pricing rules`);
+  console.log(`  - 58 pricing rules`);
 }
 
 main()
