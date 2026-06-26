@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { calculatePrice } from './pricing';
+import { calculateAccessoryBreakdown, calculatePrice } from './pricing';
 
 const linea5000Profiles = [
   ['Riel Inferior', '5001', 8408, 9861],
@@ -49,18 +49,51 @@ describe('calculatePrice for Ventana Corredera Linea 5000', () => {
     expect(result.areaM2).toBe(1.8);
     expect(result.profilesTotal).toBe(19957);
     expect(result.glassTotal).toBe(28620);
-    expect(result.accessoriesTotal).toBe(6410);
+    expect(result.accessoriesTotal).toBe(5180);
     expect(result.laborTotal).toBe(17000);
-    expect(result.subtotal).toBe(71987);
-    expect(result.preTotal).toBe(83000);
-    expect(result.total).toBe(83000);
+    expect(result.subtotal).toBe(70757);
+    expect(result.preTotal).toBe(82000);
+    expect(result.total).toBe(82000);
+  });
+
+  test('calculates Linea 5000 accessory quantities from product rules', () => {
+    const breakdown = calculateAccessoryBreakdown({
+      accessoryPrices: baseInput.accessoryPrices,
+      widthMm: baseInput.widthMm,
+      heightMm: baseInput.heightMm,
+      panelCount: baseInput.panelCount,
+      productTypeCode: baseInput.productTypeCode,
+      productLineCode: baseInput.productLineCode,
+      colorCode: baseInput.colorCode,
+    });
+
+    expect(breakdown).toEqual([
+      expect.objectContaining({ code: 'burlete', quantity: 6, unitPrice: 300, total: 1800 }),
+      expect.objectContaining({ code: 'felpa', quantity: 6, unitPrice: 130, total: 780 }),
+      expect.objectContaining({ code: 'rodamiento', quantity: 4, unitPrice: 350, total: 1400 }),
+      expect.objectContaining({ code: 'pestillo', quantity: 1, unitPrice: 1200, total: 1200 }),
+    ]);
+  });
+
+  test('calculates cafe with cafe subtotal and margin', () => {
+    const result = calculatePrice({ ...baseInput, colorCode: 'cafe' });
+
+    expect(result.accessoriesTotal).toBe(4540);
+    expect(result.subtotal).toBe(73568);
+    expect(result.preTotal).toBe(92000);
+    expect(result.total).toBe(92000);
   });
 
   test('calculates titanio from rounded cafe total plus one 10 percent step', () => {
     const result = calculatePrice({ ...baseInput, colorCode: 'titanio' });
 
-    expect(result.subtotal).toBe(74108);
-    expect(result.preTotal).toBe(103000);
-    expect(result.total).toBe(103000);
+    expect(result.subtotal).toBe(73568);
+    expect(result.preTotal).toBe(102000);
+    expect(result.total).toBe(102000);
+  });
+
+  test('calculates blanco and madera from rounded cascade totals', () => {
+    expect(calculatePrice({ ...baseInput, colorCode: 'blanco' }).total).toBe(113000);
+    expect(calculatePrice({ ...baseInput, colorCode: 'madera' }).total).toBe(130000);
   });
 });

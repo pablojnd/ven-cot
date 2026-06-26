@@ -1,12 +1,13 @@
 'use client';
 
 import { useQuoteStore, getCurrentProductType, getCurrentColor } from '@/stores/quoteStore';
+import { getPreviewProfileColors } from './WindowPreviewColors';
 
 export default function WindowPreview() {
   const store = useQuoteStore();
   const productType = getCurrentProductType(store);
   const color = getCurrentColor(store);
-  const profileColor = color?.hexValue || '#888888';
+  const { profileColor, detailColor, outerBorderColor } = getPreviewProfileColors(color?.hexValue);
 
   if (!productType) {
     return (
@@ -29,18 +30,31 @@ export default function WindowPreview() {
   const profileWidth = Math.max(6, Math.round(8 * (300 / Math.max(vbW, 200))));
 
   const renderFrame = () => {
-    // Outer frame
     return (
-      <rect
-        x={frameX}
-        y={frameY}
-        width={frameW}
-        height={frameH}
-        fill="none"
-        stroke={profileColor}
-        strokeWidth={profileWidth}
-        rx={2}
-      />
+      <g>
+        {outerBorderColor && (
+          <rect
+            x={frameX - profileWidth / 2 - 0.5}
+            y={frameY - profileWidth / 2 - 0.5}
+            width={frameW + profileWidth + 1}
+            height={frameH + profileWidth + 1}
+            fill="none"
+            stroke={outerBorderColor}
+            strokeWidth={1}
+            rx={2}
+          />
+        )}
+        <rect
+          x={frameX}
+          y={frameY}
+          width={frameW}
+          height={frameH}
+          fill="none"
+          stroke={profileColor}
+          strokeWidth={profileWidth}
+          rx={2}
+        />
+      </g>
     );
   };
 
@@ -87,7 +101,7 @@ export default function WindowPreview() {
                 width={4}
                 height={24}
                 rx={2}
-                fill={profileColor}
+                fill={detailColor}
                 stroke="#333"
                 strokeWidth={0.5}
               />
@@ -100,7 +114,7 @@ export default function WindowPreview() {
           y1={frameY + frameH - 3}
           x2={frameX + frameW - profileWidth / 2}
           y2={frameY + frameH - 3}
-          stroke={profileColor}
+          stroke={detailColor}
           strokeWidth={1}
           strokeDasharray="4,3"
           opacity={0.5}
@@ -113,7 +127,7 @@ export default function WindowPreview() {
               y1={frameY + frameH / 2}
               x2={frameX + frameW * 0.5}
               y2={frameY + frameH / 2}
-              stroke={profileColor}
+              stroke={detailColor}
               strokeWidth={1.5}
               markerEnd="url(#arrowhead)"
             />
@@ -122,7 +136,7 @@ export default function WindowPreview() {
               y1={frameY + frameH / 2}
               x2={frameX + frameW * 0.5}
               y2={frameY + frameH / 2}
-              stroke={profileColor}
+              stroke={detailColor}
               strokeWidth={1.5}
               markerEnd="url(#arrowhead)"
             />
@@ -165,8 +179,8 @@ export default function WindowPreview() {
                 />
               )}
               {/* Hinge dots */}
-              <circle cx={x + profileWidth / 2 + 4} cy={frameY + 30} r={3} fill={profileColor} />
-              <circle cx={x + profileWidth / 2 + 4} cy={frameY + frameH - 30} r={3} fill={profileColor} />
+              <circle cx={x + profileWidth / 2 + 4} cy={frameY + 30} r={3} fill={detailColor} />
+              <circle cx={x + profileWidth / 2 + 4} cy={frameY + frameH - 30} r={3} fill={detailColor} />
               {/* Handle */}
               <rect
                 x={x + panelWidth - 14}
@@ -174,7 +188,7 @@ export default function WindowPreview() {
                 width={4}
                 height={24}
                 rx={2}
-                fill={profileColor}
+                fill={detailColor}
                 stroke="#333"
                 strokeWidth={0.5}
               />
@@ -185,7 +199,7 @@ export default function WindowPreview() {
         <path
           d={`M${frameX + profileWidth / 2 + 2},${frameY + profileWidth / 2 + 2} Q${frameX + frameW * 0.15},${frameY + frameH * 0.3} ${frameX + profileWidth / 2 + 2},${frameY + frameH * 0.6}`}
           fill="none"
-          stroke={profileColor}
+          stroke={detailColor}
           strokeWidth={1}
           strokeDasharray="3,3"
           opacity={0.4}
@@ -233,7 +247,7 @@ export default function WindowPreview() {
                 width={5}
                 height={36}
                 rx={2.5}
-                fill={profileColor}
+                fill={detailColor}
                 stroke="#333"
                 strokeWidth={0.5}
               />
@@ -280,7 +294,7 @@ export default function WindowPreview() {
           y1={frameY + profileWidth / 2 + 2}
           x2={frameX + frameW / 2}
           y2={frameY + frameH - profileWidth / 2 - 2}
-          stroke={profileColor}
+          stroke={detailColor}
           strokeWidth={0.5}
           strokeDasharray="6,4"
           opacity={0.2}
@@ -314,7 +328,7 @@ export default function WindowPreview() {
           refY="3"
           orient="auto"
         >
-          <polygon points="0 0, 8 3, 0 6" fill={profileColor} opacity={0.4} />
+          <polygon points="0 0, 8 3, 0 6" fill={detailColor} opacity={0.4} />
         </marker>
       </defs>
 

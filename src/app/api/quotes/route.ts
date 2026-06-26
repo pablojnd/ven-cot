@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateQuoteNumber } from '@/lib/quoteNumber';
-import { calculatePrice, generateBreakdownRecords } from '@/lib/pricing';
+import { calculateAccessoryBreakdown, calculatePrice, generateBreakdownRecords } from '@/lib/pricing';
 import { sendQuoteEmails } from '@/lib/email';
 import { z } from 'zod';
 
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         const minimumAreaM2 = minimumAreaRule?.value ?? 0.5;
 
         // Fetch accessories with their prices
-        const accessoryPrices: { name: string; code: string; price: number; priceCafe: number; unit: string; quantity: number }[] = [];
+        const accessoryPrices: { accessoryId: string; name: string; code: string; price: number; priceCafe: number; unit: string; quantity: number }[] = [];
         for (const acc of item.accessories) {
           const accessory = await tx.accessory.findUnique({
             where: { id: acc.accessoryId },
@@ -169,6 +169,7 @@ export async function POST(request: NextRequest) {
             throw new Error(`Accessory not found: ${acc.accessoryId}`);
           }
           accessoryPrices.push({
+            accessoryId: accessory.id,
             name: accessory.name,
             code: accessory.code,
             price: accessory.price,
@@ -228,24 +229,27 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // Create accessory records
-        for (const acc of item.accessories) {
-          const accessory = await tx.accessory.findUnique({
-            where: { id: acc.accessoryId },
+        // Create accessory records from the same breakdown used in calculatePrice.
+        const accessoryBreakdown = calculateAccessoryBreakdown({
+          accessoryPrices,
+          widthMm: item.widthMm,
+          heightMm: item.heightMm,
+          panelCount: item.panelCount,
+          productTypeCode: productType.code,
+          productLineCode: productLine.code,
+          colorCode,
+        });
+        for (const acc of accessoryBreakdown) {
+          if (!acc.accessoryId) continue;
+          await tx.quoteItemAccessory.create({
+            data: {
+              quoteItemId: quoteItem.id,
+              accessoryId: acc.accessoryId,
+              quantity: acc.quantity,
+              unitPrice: acc.unitPrice,
+              totalPrice: acc.total,
+            },
           });
-          if (accessory) {
-            const useCafePrice = colorCode !== 'natural' && colorCode !== 'satinado';
-            const unitPrice = useCafePrice ? accessory.priceCafe : accessory.price;
-            await tx.quoteItemAccessory.create({
-              data: {
-                quoteItemId: quoteItem.id,
-                accessoryId: acc.accessoryId,
-                quantity: acc.quantity,
-                unitPrice,
-                totalPrice: unitPrice * acc.quantity,
-              },
-            });
-          }
         }
 
         // Create price breakdown records

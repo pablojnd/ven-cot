@@ -1,0 +1,101 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e8]: C
+          - generic [ref=e9]: Crispieri Cotizador
+        - navigation [ref=e10]:
+          - button "Cotizar" [ref=e11]:
+            - img [ref=e12]
+            - text: Cotizar
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e18]:
+          - generic [ref=e19]: "1"
+          - heading "Tipo de producto" [level=3] [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - generic [ref=e23]: "7"
+            - heading "Cantidad y observaciones" [level=3] [ref=e24]
+          - generic [ref=e25]:
+            - generic [ref=e26]:
+              - text: Cantidad
+              - generic [ref=e27]:
+                - button [disabled] [ref=e28]:
+                  - img [ref=e29]
+                - spinbutton [ref=e31]: "1"
+                - button [ref=e32]:
+                  - img [ref=e33]
+              - text: unidades
+            - generic [ref=e34]:
+              - generic [ref=e35]:
+                - text: Observaciones
+                - generic [ref=e36]: 0/300
+              - textbox "Orientación, ubicación, notas especiales..." [ref=e37]
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: "8"
+            - heading "Datos del Cliente" [level=3] [ref=e41]
+          - generic [ref=e42]:
+            - generic [ref=e43]:
+              - text: Nombre
+              - generic [ref=e44]:
+                - img [ref=e45]
+                - textbox "Nombre del cliente" [ref=e48]
+            - generic [ref=e49]:
+              - text: Teléfono
+              - generic [ref=e50]:
+                - img [ref=e51]
+                - generic [ref=e53]:
+                  - generic [ref=e54]: "+569"
+                  - textbox "12345678" [ref=e55]
+            - generic [ref=e56]:
+              - text: Correo Electrónico
+              - generic [ref=e57]:
+                - img [ref=e58]
+                - textbox "cliente@ejemplo.cl" [ref=e61]
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - img [ref=e68]
+            - heading "Vista previa" [level=4] [ref=e71]
+          - generic [ref=e73]: Seleccione un tipo de producto
+          - paragraph [ref=e74]: Producto • 2 hojas
+        - generic [ref=e75]:
+          - heading "Características seleccionadas" [level=4] [ref=e76]
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - img [ref=e80]
+              - generic [ref=e84]: "Producto:"
+              - generic [ref=e85]: —
+            - generic [ref=e86]:
+              - img [ref=e88]
+              - generic [ref=e92]: "Línea / Serie:"
+              - generic [ref=e93]: —
+            - generic [ref=e94]:
+              - img [ref=e96]
+              - generic [ref=e102]: "Dimensiones:"
+              - generic [ref=e103]: 1.50 m × 1.20 m
+            - generic [ref=e104]:
+              - img [ref=e106]
+              - generic [ref=e112]: "Hojas:"
+              - generic [ref=e113]: 2 hojas
+            - generic [ref=e114]:
+              - img [ref=e116]
+              - generic [ref=e122]: "Color del perfil:"
+              - generic [ref=e123]: —
+            - generic [ref=e124]:
+              - img [ref=e126]
+              - generic [ref=e130]: "Vidrio:"
+              - generic [ref=e131]: —
+        - generic [ref=e132]:
+          - button "Generar cotización" [disabled] [ref=e133]:
+            - text: Generar cotización
+            - img [ref=e134]
+          - button "Guardar borrador" [disabled] [ref=e136]:
+            - img [ref=e137]
+            - text: Guardar borrador
+    - contentinfo [ref=e139]:
+      - paragraph [ref=e141]: © 2026 Crispieri Cotizador — Sistema de cotización online
+  - region "Notifications alt+T"

@@ -11,12 +11,22 @@ export interface ProfilePriceInput {
 }
 
 export interface AccessoryPriceInput {
+  accessoryId?: string;
   name: string;
   code: string;
   price: number;
   priceCafe: number;
   unit: string;
   quantity: number;
+}
+
+export interface AccessoryBreakdownItem {
+  accessoryId?: string;
+  name: string;
+  code: string;
+  unitPrice: number;
+  quantity: number;
+  total: number;
 }
 
 export interface PriceCalculationInput {
@@ -240,24 +250,61 @@ function calculateProfilesTotal(
   }, 0);
 }
 
-function calculateAccessoriesTotal(
-  accessoryPrices: AccessoryPriceInput[],
+function getAccessoryQuantity(
+  code: string,
+  manualQuantity: number,
   perimeterM: number,
   panelCount: number,
-  useCafePrice: boolean
+  productTypeCode: string,
+  productLineCode: string
 ): number {
-  return accessoryPrices.reduce((total, acc) => {
-    const unitPrice = useCafePrice ? acc.priceCafe : acc.price;
-    let qty = acc.quantity;
+  const isLinea5000Corredera = productTypeCode === 'corredera' && productLineCode === 'linea-5000';
 
-    if (acc.code === 'burlete') {
-      qty = Math.ceil(perimeterM * panelCount);
-    } else if (acc.code === 'felpa') {
-      qty = Math.ceil(perimeterM * 1.10 * panelCount);
-    }
+  if (isLinea5000Corredera) {
+    if (code === 'burlete') return Math.ceil(perimeterM);
+    if (code === 'felpa') return Math.ceil(perimeterM * 1.10);
+    if (code === 'rodamiento') return panelCount * 2;
+    if (code === 'pestillo') return 1;
+  }
 
-    return total + qty * unitPrice;
-  }, 0);
+  if (code === 'burlete') return Math.ceil(perimeterM * panelCount);
+  if (code === 'felpa') return Math.ceil(perimeterM * 1.10 * panelCount);
+
+  return manualQuantity;
+}
+
+export function calculateAccessoryBreakdown(input: {
+  accessoryPrices: AccessoryPriceInput[];
+  widthMm: number;
+  heightMm: number;
+  panelCount: number;
+  productTypeCode: string;
+  productLineCode: string;
+  colorCode: string;
+}): AccessoryBreakdownItem[] {
+  const perimeterM = 2 * (input.widthMm / 1000 + input.heightMm / 1000);
+  const useCafeColumn = usesCafePrice(input.colorCode);
+
+  return input.accessoryPrices.map((acc) => {
+    const unitPrice = useCafeColumn ? acc.priceCafe : acc.price;
+    const quantity = getAccessoryQuantity(
+      acc.code,
+      acc.quantity,
+      perimeterM,
+      input.panelCount,
+      input.productTypeCode,
+      input.productLineCode
+    );
+
+    return {
+      accessoryId: acc.accessoryId,
+      name: acc.name,
+      code: acc.code,
+      unitPrice,
+      quantity,
+      total: quantity * unitPrice,
+    };
+  });
 }
 
 /**
@@ -322,8 +369,22 @@ export function calculatePrice(input: PriceCalculationInput): PriceBreakdown {
   const glassTotal = areaM2 * glassPricePerM2;
 
   // 4. Accessories totals
-  const accessoriesNaturalTotal = calculateAccessoriesTotal(accessoryPrices, perimeterM, panelCount, false);
-  const accessoriesCafeTotal = calculateAccessoriesTotal(accessoryPrices, perimeterM, panelCount, true);
+  const accessoryBase = {
+    accessoryPrices,
+    widthMm,
+    heightMm,
+    panelCount,
+    productTypeCode,
+    productLineCode,
+  };
+  const accessoriesNaturalTotal = calculateAccessoryBreakdown({
+    ...accessoryBase,
+    colorCode: 'natural',
+  }).reduce((total, item) => total + item.total, 0);
+  const accessoriesCafeTotal = calculateAccessoryBreakdown({
+    ...accessoryBase,
+    colorCode: 'cafe',
+  }).reduce((total, item) => total + item.total, 0);
 
   // 5. Labor total
   const laborTotal = laborCost;
