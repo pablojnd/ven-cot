@@ -1,0 +1,16 @@
+.git
+.github
+.next
+node_modules
+
+.env
+.env.*
+!.env.example
+
+*.log
+server.log
+
+db/*.db-wal
+db/*.db-shm
+
+README.md
